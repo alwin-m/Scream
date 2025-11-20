@@ -35,7 +35,6 @@ Scream is a lightweight social experiment that brings conversation back to words
 
 The screenshot below shows the **`tbl_users`** table (user/account schema) currently in the database. This is the first table created; additional tables for posts, comments, likes, views, reports, and sessions will be added and documented with screenshots in subsequent commits.
 
-
 ### **Table: `tbl_users`**
 
 The core user/account storage for Scream.
@@ -71,6 +70,7 @@ CREATE TABLE tbl_users (
 | **profile_visibility** | ENUM                    | public/private profile             |
 
 ![tbl\_users table screenshot](https://github.com/user-attachments/assets/2450ea45-159c-428e-81da-4ad25a6e9e4d)
+
 ---
 
 ## Table: `tbl_posts`
@@ -105,6 +105,48 @@ CREATE TABLE tbl_posts (
 | **is_deleted** | TINYINT(1)              | Soft delete flag          |
 
 <img width="1187" height="300" alt="Screenshot 2025-11-20 141209" src="https://github.com/user-attachments/assets/eb5ff0f7-eae2-4213-824b-9228a5bce80d" />
+
+---
+
+## Table: `tbl_comments`
+
+Stores all comments on posts, including threaded replies.
+
+### **SQL Definition**
+
+```sql
+CREATE TABLE tbl_comments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    parent_id BIGINT DEFAULT NULL,
+    content TEXT NOT NULL,
+    is_edited TINYINT(1) DEFAULT 0,
+    is_deleted TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL DEFAULT NULL,
+    FOREIGN KEY (post_id) REFERENCES tbl_posts(id),
+    FOREIGN KEY (user_id) REFERENCES tbl_users(id),
+    FOREIGN KEY (parent_id) REFERENCES tbl_comments(id)
+);
+```
+
+### **Column Details**
+
+| Column Name    | Type                       | Description                                  |
+| -------------- | -------------------------- | -------------------------------------------- |
+| **id**         | BIGINT, PK, AUTO_INCREMENT | Unique comment ID                            |
+| **post_id**    | BIGINT, FK                 | References tbl_posts.id                      |
+| **user_id**    | BIGINT, FK                 | References tbl_users.id                      |
+| **parent_id**  | BIGINT, FK/NULL            | If NULL = top-level comment; otherwise reply |
+| **content**    | TEXT                       | Comment text                                 |
+| **is_edited**  | TINYINT(1)                 | 1 = edited, 0 = original                     |
+| **is_deleted** | TINYINT(1)                 | Soft delete flag                             |
+| **created_at** | DATETIME                   | Timestamp of creation                        |
+| **updated_at** | DATETIME                   | Timestamp when edited                        |
+
+<img width="1226" height="362" alt="Screenshot 2025-11-21 002934" src="https://github.com/user-attachments/assets/d3c6e425-1d7c-48a3-b10c-8a24a5b11498" />
+
 
 ---
 
