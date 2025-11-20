@@ -28,3 +28,5 @@ This project is open source. Anyone can contribute ideas, fixes, or improvements
 ## Vision
 
 A space where text matters again — clean, quiet, and honest.
+
+<img width="1421" height="365" alt="Screenshot 2025-11-19 165225" src="https://github.com/user-attachments/assets/2450ea45-159c-428e-81da-4ad25a6e9e4d" />
