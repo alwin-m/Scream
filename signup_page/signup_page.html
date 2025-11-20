@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Scream - Signup</title>
+
 <style>
 :root {
     --primary: #4A90E2;
@@ -96,27 +97,31 @@ button:hover {
 .login-link a:hover {
     text-decoration: underline;
 }
-
 </style>
 </head>
+
 <body>
 <div class="container">
   <h2>Create Account</h2>
 
-  <label>Username</label>
-  <input type="text" id="username" placeholder="Choose a username" />
-  <div id="username-status"></div>
+  <!-- CONNECTED BACKEND FORM -->
+  <form action="signup_action.php" method="POST">
 
-  <label>Email</label>
-  <input type="email" id="email" placeholder="Enter your email" />
+    <label>Username</label>
+    <input type="text" id="username" name="username" placeholder="Choose a username" required />
+    <div id="username-status"></div>
 
-  <label>Password</label>
-  <input type="password" id="password" placeholder="Create a password" />
+    <label>Email</label>
+    <input type="email" id="email" name="email" placeholder="Enter your email" required />
 
-  <label>Date of Birth</label>
-  <input type="date" id="dob" />
+    <label>Password</label>
+    <input type="password" id="password" name="password" placeholder="Create a password" required />
 
-  <button onclick="submitForm()">Sign Up</button>
+    <label>Date of Birth</label>
+    <input type="date" id="dob" name="dob" required />
+
+    <button type="submit">Sign Up</button>
+  </form>
 
   <div class="login-link">Already have an account? <a href="#">Login here</a>.</div>
 </div>
@@ -132,7 +137,7 @@ document.getElementById('username').addEventListener('input', function() {
       return;
     }
 
-    // Replace with real backend check
+    // LIVE CHECK (Must match your backend file)
     fetch('check_username.php?username=' + username)
       .then(res => res.text())
       .then(data => {
@@ -145,10 +150,7 @@ document.getElementById('username').addEventListener('input', function() {
         }
       });
 });
-
-function submitForm() {
-    alert("Form submitted (Connect backend next)");
-}
 </script>
+
 </body>
 </html>
