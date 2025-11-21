@@ -6,7 +6,7 @@
 $host = 'localhost';
 $db   = 'scream';
 $user = 'root';
-$pass = '';
+$pass = 'scream';
 
 $conn = new mysqli($host, $user, $pass, $db);
 
