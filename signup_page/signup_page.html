@@ -13,6 +13,8 @@
     --card-bg: #1b1b1b;
     --text-dark: #fff;
     --text-light: #ccc;
+    --error: #ff4d4d;
+    --success: #4dff91;
 }
 
 body {
@@ -61,7 +63,9 @@ input:focus {
     outline: 2px solid var(--primary);
 }
 
-#username-status {
+#username-status,
+#password-status,
+#confirm-status {
     font-size: 13px;
     height: 16px;
     margin-top: -6px;
@@ -97,6 +101,26 @@ button:hover {
 .login-link a:hover {
     text-decoration: underline;
 }
+
+/* Additional animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px);} 
+  to { opacity:1; transform: translateY(0);} 
+}
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity:0; }
+  to { transform: scale(1); opacity:1; }
+}
+.container {
+  animation: fadeInUp 0.8s ease-out;
+}
+input, button {
+  animation: scaleIn 0.4s ease-out;
+}
+button:hover {
+    transform: translateY(-3px) scale(1.03);
+    transition: 0.2s;
+}
 </style>
 </head>
 
@@ -104,8 +128,7 @@ button:hover {
 <div class="container">
   <h2>Create Account</h2>
 
-  <!-- CONNECTED BACKEND FORM -->
-  <form action="signup_action.php" method="POST">
+  <form action="signup_action.php" method="POST" onsubmit="return validateForm()">
 
     <label>Username</label>
     <input type="text" id="username" name="username" placeholder="Choose a username" required />
@@ -116,6 +139,11 @@ button:hover {
 
     <label>Password</label>
     <input type="password" id="password" name="password" placeholder="Create a password" required />
+    <div id="password-status"></div>
+
+    <label>Confirm Password</label>
+    <input type="password" id="confirm" placeholder="Re‑enter your password" required />
+    <div id="confirm-status"></div>
 
     <label>Date of Birth</label>
     <input type="date" id="dob" name="dob" required />
@@ -123,33 +151,71 @@ button:hover {
     <button type="submit">Sign Up</button>
   </form>
 
-  <div class="login-link">Already have an account? <a href="#">Login here</a>.</div>
+  <div class="login-link">Already have an account? <a href="login.php">Login here</a>.</div>
 </div>
 
 <script>
-document.getElementById('username').addEventListener('input', function() {
+// Live username validation
+const usernameInput = document.getElementById('username');
+const usernameStatus = document.getElementById('username-status');
+
+usernameInput.addEventListener('input', function() {
     const username = this.value.trim();
-    const statusBox = document.getElementById('username-status');
 
     if (username.length < 3) {
-      statusBox.style.color = 'orange';
-      statusBox.textContent = 'Username too short';
+      usernameStatus.style.color = 'orange';
+      usernameStatus.textContent = 'Username too short';
       return;
     }
 
-    // LIVE CHECK (Must match your backend file)
     fetch('check_username.php?username=' + username)
       .then(res => res.text())
       .then(data => {
         if (data === 'taken') {
-          statusBox.style.color = 'red';
-          statusBox.textContent = 'Username already taken';
+          usernameStatus.style.color = 'var(--error)';
+          usernameStatus.textContent = 'Username already taken';
         } else {
-          statusBox.style.color = 'lightgreen';
-          statusBox.textContent = 'Username available';
+          usernameStatus.style.color = 'var(--success)';
+          usernameStatus.textContent = 'Username available';
         }
       });
 });
+
+// Password strength
+const pass = document.getElementById('password');
+const passStatus = document.getElementById('password-status');
+pass.addEventListener('input', () => {
+    const val = pass.value;
+    if (val.length < 6) {
+        passStatus.style.color = 'var(--error)';
+        passStatus.textContent = 'Password too weak';
+    } else {
+        passStatus.style.color = 'var(--success)';
+        passStatus.textContent = 'Strong password';
+    }
+});
+
+// Confirm password check
+const confirm = document.getElementById('confirm');
+const confirmStatus = document.getElementById('confirm-status');
+confirm.addEventListener('input', () => {
+    if (confirm.value !== pass.value) {
+        confirmStatus.style.color = 'var(--error)';
+        confirmStatus.textContent = 'Passwords do not match';
+    } else {
+        confirmStatus.style.color = 'var(--success)';
+        confirmStatus.textContent = 'Passwords match';
+    }
+});
+
+// Final form validation
+function validateForm() {
+    if (pass.value !== confirm.value) {
+        alert('Passwords do not match!');
+        return false;
+    }
+    return true;
+}
 </script>
 
 </body>
