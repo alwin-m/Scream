@@ -1,239 +1,191 @@
 /* General Styles */
-:root {
-    --primary-color: #00ff88;
-    --secondary-color: #00ccff;
-    --bg-dark: #0f0f13;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --text-color: #ffffff;
-    --text-muted: #b0b0b0;
-    --font-main: 'Outfit', sans-serif;
-}
-
-* {
-    box-sizing: border-box;
+body {
     margin: 0;
     padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: url('../assets/background_blue.png') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+    background-color: #f4f4f4;
+    /* Fallback */
 }
 
-body {
-    font-family: var(--font-main);
-    background-color: var(--bg-dark);
-    background-image:
-        radial-gradient(circle at 10% 20%, rgba(0, 255, 136, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(0, 204, 255, 0.1) 0%, transparent 40%);
-    color: var(--text-color);
-    line-height: 1.6;
-    overflow-x: hidden;
-    min-height: 100vh;
-}
-
-/* Glassmorphism Utilities */
-.glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-/* Header */
 .header {
-    background: rgba(15, 15, 19, 0.8);
-    backdrop-filter: blur(20px);
-    padding: 1rem 2rem;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 15px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: sticky;
     top: 0;
     z-index: 1000;
-    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    animation: scaleHeader 0.5s ease-out;
     transition: all 0.3s ease;
 }
 
 .header.scrolled {
-    padding: 0.8rem 2rem;
-    background: rgba(15, 15, 19, 0.95);
+    transform: translateY(-10px);
+    background-color: rgba(0, 0, 0, 0.9);
 }
 
 .header h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 28px;
     margin: 0;
+    animation: fadeIn 1s ease-in-out;
 }
 
 .header nav {
     display: flex;
-    gap: 2rem;
+    gap: 20px;
 }
 
 .header nav a {
-    color: var(--text-muted);
+    color: #fff;
     text-decoration: none;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: color 0.3s ease;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .header nav a:hover {
-    color: var(--primary-color);
+    color: #4CAF50;
+    transform: translateY(-2px);
 }
 
-/* Main Container */
 .container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    animation: slideUp 0.5s ease-in-out;
 }
 
-/* Post Box */
 .post-box {
-    padding: 1.5rem;
+    margin-bottom: 30px;
 }
 
 .post-box textarea {
     width: 100%;
     height: 120px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 1rem;
-    color: var(--text-color);
-    font-size: 1rem;
-    font-family: var(--font-main);
+    padding: 15px;
+    font-size: 18px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    box-sizing: border-box;
     resize: none;
-    transition: border-color 0.3s ease, background 0.3s ease;
+    transition: border-color 0.3s ease;
+    font-family: 'Arial', sans-serif;
 }
 
 .post-box textarea:focus {
+    border-color: #4CAF50;
     outline: none;
-    border-color: var(--primary-color);
-    background: rgba(0, 0, 0, 0.4);
-}
-
-#charCount {
-    text-align: right;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
 }
 
 .post-box button {
-    margin-top: 1rem;
-    padding: 0.8rem 2rem;
-    background: linear-gradient(45deg, var(--primary-color), #00cc88);
-    color: #000;
-    font-weight: 600;
+    margin-top: 15px;
+    padding: 12px 25px;
+    background-color: #28a745;
+    color: #fff;
     border: none;
-    border-radius: 30px;
+    border-radius: 8px;
+    font-size: 18px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    font-family: var(--font-main);
+    transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .post-box button:hover {
+    background-color: #218838;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
 }
 
-/* Posts Stream */
 .post {
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: slideIn 0.5s ease-out forwards;
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    animation: slideInRight 0.5s ease-out forwards;
     opacity: 0;
 }
 
 .post:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
 }
 
 .post h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-    color: var(--text-color);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    color: #333;
     cursor: pointer;
-}
-
-.post h3 .icon {
-    font-size: 1.5rem;
-    /* Larger emoji/icon */
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    transition: color 0.3s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-.post h3 span.username-text {
-    font-weight: 600;
+.post h3:hover {
+    color: #4CAF50;
 }
 
 .post p {
-    font-size: 1.05rem;
-    color: #e0e0e0;
-    margin-bottom: 1.5rem;
-    white-space: pre-wrap;
+    margin: 0;
+    font-size: 18px;
+    color: #555;
+    line-height: 1.5;
 }
 
 .actions {
-    display: flex;
-    gap: 1.5rem;
-    border-top: 1px solid var(--glass-border);
-    padding-top: 1rem;
+    margin-top: 15px;
 }
 
 .actions button {
+    padding: 8px 15px;
+    font-size: 24px;
     background: none;
     border: none;
-    color: var(--text-muted);
-    font-size: 1.1rem;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: color 0.3s ease, transform 0.2s ease;
-    font-family: var(--font-main);
+    transition: transform 0.3s ease;
+    color: #555;
 }
 
 .actions button:hover {
-    color: var(--primary-color);
-    transform: scale(1.1);
+    transform: scale(1.2);
+    color: #4CAF50;
 }
 
 .actions button.liked {
-    color: var(--primary-color);
+    color: #4CAF50;
 }
 
-/* Footer */
 .footer {
     text-align: center;
-    padding: 2rem;
-    color: var(--text-muted);
-    margin-top: auto;
-    background: rgba(0, 0, 0, 0.2);
-    position: relative;
-    border-top: 1px solid var(--glass-border);
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s ease-out 0.2s forwards;
+    transform: translateY(100%);
+    /* Initial state for animation */
+    /* Note: In production, might want this visible by default or triggered */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
 }
 
-/* Modals */
+/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -241,115 +193,225 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
+    animation: fadeIn 0.3s ease-in-out;
     z-index: 2000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.modal.active {
-    opacity: 1;
 }
 
 .modal-content {
-    background: #1a1a1f;
-    padding: 2rem;
-    border-radius: 20px;
-    width: 90%;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
     max-width: 500px;
+    width: 100%;
     position: relative;
-    border: 1px solid var(--glass-border);
-    transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
-.modal.active .modal-content {
-    transform: scale(1);
+    animation: bounceIn 0.4s ease-out;
+    color: #333;
 }
 
 .close-btn {
     position: absolute;
-    top: 1rem;
-    right: 1.5rem;
-    font-size: 1.5rem;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
     cursor: pointer;
-    color: var(--text-muted);
     transition: color 0.3s ease;
+    color: #888;
 }
 
 .close-btn:hover {
-    color: #fff;
+    color: #4CAF50;
 }
 
-/* Search Modal Specifics */
+/* Search Modal Styles */
+.search-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #fff;
+    transition: transform 0.3s ease;
+}
+
+.search-btn:hover {
+    transform: scale(1.2);
+}
+
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 15px;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+}
+
+.search-results div {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+}
+
+.search-results div:hover {
+    background: #f0f0f0;
+}
+
 #searchInput {
     width: 100%;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: #fff;
-    font-size: 1.1rem;
-    margin: 1rem 0;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 18px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s ease;
+    color: #333;
+}
+
+#searchInput:focus {
+    border-color: #4CAF50;
+    outline: none;
 }
 
 #searchSubmit {
     width: 100%;
-    padding: 1rem;
-    background: var(--primary-color);
-    color: #000;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
     border: none;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1rem;
+    border-radius: 8px;
     cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s ease, transform 0.3s ease;
 }
 
-.search-results {
-    margin-top: 1rem;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.search-results div {
-    padding: 1rem;
-    border-bottom: 1px solid var(--glass-border);
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.search-results div:hover {
-    background: rgba(255, 255, 255, 0.05);
+#searchSubmit:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
 }
 
 /* Animations */
-@keyframes slideIn {
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
-@media (max-width: 600px) {
-    .header {
-        padding: 1rem;
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
     }
 
-    .header h1 {
-        font-size: 1.5rem;
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
     }
 
-    .container {
-        margin: 1rem auto;
-        padding: 0 1rem;
+    40% {
+        transform: translateY(-10px);
     }
+
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleHeader {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Utilities */
+.new-post {
+    animation: pulse 1s ease-in-out;
+}
+
+/* Profile specific adjustments since we reuse this CSS */
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.stat-box {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.stat-label {
+    color: #666;
 }

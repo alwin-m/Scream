@@ -16,12 +16,12 @@ if (postTextarea) {
         if (currentLength > 900) {
             charCount.style.color = '#ff4444';
         } else {
-            charCount.style.color = 'var(--text-muted)';
+            charCount.style.color = '#666';
         }
     });
 }
 
-// Header Scroll Effect
+// Header Scroll Animation
 window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
@@ -35,19 +35,13 @@ function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
-        // Trigger reflow
-        void modal.offsetWidth;
-        modal.classList.add('active');
     }
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
+        modal.style.display = 'none';
     }
 }
 
@@ -58,7 +52,9 @@ window.addEventListener('click', (event) => {
     }
 });
 
+// Expose to global scope for HTML onclick
 window.closeModal = closeModal;
+window.openModal = openModal;
 
 // Search Logic
 const searchBtn = document.getElementById('searchButton');
@@ -75,6 +71,8 @@ if (searchSubmitBtn) {
         const query = searchInput.value.trim();
         if (query.length > 0) {
             fetchSearchResults(query);
+        } else {
+            alert('Please enter a search term.');
         }
     });
 }
@@ -85,16 +83,18 @@ function fetchSearchResults(query) {
         .then(data => {
             searchResults.innerHTML = '';
             if (data.length > 0) {
-                data.forEach(user => {
+                // Animate results
+                data.forEach((user, index) => {
                     const div = document.createElement('div');
                     div.innerHTML = `<strong>${user.username}</strong>`;
+                    div.style.animationDelay = `${index * 0.1}s`; // Stagger
                     div.addEventListener('click', () => {
-                        openProfile(user.username);
+                        window.location.href = `profile.php?username=${encodeURIComponent(user.username)}`;
                     });
                     searchResults.appendChild(div);
                 });
             } else {
-                searchResults.innerHTML = '<div style="padding:1rem; text-align:center; color:#888;">No users found.</div>';
+                searchResults.innerHTML = '<div style="padding:1rem;">No users found.</div>';
             }
         })
         .catch(err => console.error('Search error:', err));
@@ -103,9 +103,15 @@ function fetchSearchResults(query) {
 // Like System
 document.querySelectorAll('.like-btn').forEach(btn => {
     btn.addEventListener('click', function (e) {
+        // Prevent default if it's inside an anchor (though we use buttons now)
         e.preventDefault();
-        // Check if we clicked the count span, if so, handled by propagation? 
-        // No, stopPropagation is on the span.
+
+        // Animation
+        this.style.transform = 'scale(1.5)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 300);
+
         const postId = this.getAttribute('data-post-id');
         toggleLike(postId, this);
     });
@@ -124,15 +130,6 @@ function toggleLike(postId, btnElement) {
             if (data.success) {
                 const countSpan = btnElement.querySelector('.like-count-text');
                 if (countSpan) countSpan.textContent = data.new_count;
-                btnElement.style.transform = 'scale(1.2)';
-                setTimeout(() => btnElement.style.transform = 'scale(1)', 200);
-
-                // Toggle class for visual feedback
-                if (btnElement.classList.contains('liked')) {
-                    btnElement.classList.remove('liked');
-                } else {
-                    btnElement.classList.add('liked');
-                }
             }
         })
         .catch(err => console.error('Like error:', err));
@@ -163,36 +160,42 @@ function fetchLikers(postId) {
             users.forEach(u => {
                 const li = document.createElement('li');
                 li.textContent = u.username;
-                li.style.padding = '0.5rem 0';
-                li.style.borderBottom = '1px solid var(--glass-border)';
+                li.style.padding = '10px';
+                li.style.borderBottom = '1px solid #eee';
                 list.appendChild(li);
             });
         });
 }
 
+// Profile Modal specific logic for the main page (if clicking typical usernames inside posts)
 document.querySelectorAll('.username').forEach(userElem => {
     userElem.addEventListener('click', () => {
         const username = userElem.getAttribute('data-username');
-        openProfile(username);
+        openProfileModal(username);
     });
 });
 
-function openProfile(username) {
+function openProfileModal(username) {
     openModal('profileModal');
     document.getElementById('profileUsername').textContent = username;
 
-    // Reset placeholders
+    // Reset
     document.getElementById('profileAge').textContent = '...';
     document.getElementById('profileSex').textContent = '...';
     document.getElementById('profilefollow').textContent = '...';
 
-    // Fetch Details
     fetch(`actions/get_user.php?username=${encodeURIComponent(username)}`)
         .then(res => res.json())
         .then(data => {
             document.getElementById('profileAge').textContent = data.age || 'N/A';
             document.getElementById('profileSex').textContent = data.sex || 'N/A';
-            document.getElementById('profilefollow').textContent = data.followers_count || data.follow || '0';
+            document.getElementById('profilefollow').textContent = data.followers_count || '0';
         })
         .catch(err => console.error(err));
 }
+
+// Animate posts on load
+document.querySelectorAll('.post').forEach((post, index) => {
+    post.style.animationDelay = `${index * 0.1}s`;
+    post.style.opacity = 1;
+});
