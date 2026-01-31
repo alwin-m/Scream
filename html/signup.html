@@ -1,52 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Scream</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap"
-        rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sign Up · SCREAM</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #0b1c2d;
+      --muted: #6b7c8f;
+      --surface: rgba(255, 255, 255, 0.7);
+      --line: rgba(15, 40, 70, 0.08);
+      --blue-deep: #0e2a47;
+      --blue-soft: #6fa8dc;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      font-family: Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(111,168,220,0.25), transparent 45%),
+        radial-gradient(circle at 70% 80%, rgba(14,42,71,0.18), transparent 55%),
+        linear-gradient(180deg, #f7fbff, #edf3f8);
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-shell {
+      width: 100%;
+      max-width: 420px;
+      padding: 44px 36px 40px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 30px 80px rgba(10, 30, 60, 0.15);
+    }
+
+    .logo {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 34px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    form { display: grid; gap: 22px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label { font-size: 13px; color: var(--muted); }
+
+    .input-wrap { position: relative; }
+
+    input {
+      width: 100%;
+      padding: 15px 16px;
+      font-size: 16px; /* mobile-friendly */
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--blue-soft);
+      box-shadow: 0 0 0 4px rgba(111,168,220,0.2);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .submit {
+      margin-top: 8px;
+      padding: 16px;
+      font-size: 16px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--blue-deep), #173f6b);
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .submit:active { transform: scale(0.985); }
+
+    .footer {
+      margin-top: 26px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer a { color: var(--blue-deep); text-decoration: none; font-weight: 500; }
+
+    .philosophy {
+      margin-top: 26px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #74889e;
+      text-align: center;
+    }
+  </style>
 </head>
 
 <body>
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
+  <section class="auth-shell">
+    <div class="logo">SCREAM</div>
+    <div class="subtitle">A quiet place for words</div>
 
-    <div class="auth-container">
-        <div class="auth-card glass-panel">
-            <h1 class="logo center-text">Scream.</h1>
-            <h2 class="auth-title">Create Account</h2>
-            <p class="auth-subtitle">Join the silence.</p>
+    <form action="../actions/register.php" method="POST">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+      </div>
 
-            <form action="../actions/register.php" method="POST" class="auth-form">
-                <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="@username" required>
-                </div>
-                <div class="input-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
-                </div>
-                <!-- Optional: Date of Birth as per schema, skipping for simplicity of MVP flow or adding if critical -->
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
 
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
-                </div>
-
-                <button type="submit" class="btn-primary full-width">Sign Up</button>
-            </form>
-
-            <p class="auth-footer">
-                Already have an account? <a href="login.html">Login</a>
-            </p>
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input id="password" name="password" type="password" autocomplete="new-password" required />
+          <span class="toggle-password" onclick="togglePassword()">show</span>
         </div>
-    </div>
-</body>
+      </div>
 
+      <button class="submit" type="submit">Create account</button>
+    </form>
+
+    <div class="footer">Already here? <a href="login.html">Log in</a></div>
+
+    <div class="philosophy">No feeds. No noise. Just thought.</div>
+  </section>
+
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const toggle = document.querySelector('.toggle-password');
+      if (input.type === 'password') {
+        input.type = 'text';
+        toggle.textContent = 'hide';
+      } else {
+        input.type = 'password';
+        toggle.textContent = 'show';
+      }
+    }
+  </script>
+</body>
 </html>
