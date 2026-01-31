@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scream - Quietly Loud</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar glass-panel">
+            <h1 class="logo">Scream.</h1>
+            <ul class="nav-links">
+                <li><a href="#" class="active"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="#"><i class="fa-solid fa-fire"></i> Trending</a></li>
+                <li><a href="#"><i class="fa-solid fa-bell"></i> Notifications</a></li>
+                <li><a href="#"><i class="fa-solid fa-user"></i> Profile</a></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                <li><a href="../actions/logout.php" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i>
+                        Logout</a></li>
+            </ul>
+            <button class="btn-primary shout-btn" id="open-post-modal">Scream</button>
+        </nav>
+
+        <!-- Main Feed -->
+        <main class="feed-container">
+            <!-- Header for Mobile -->
+            <header class="mobile-header glass-panel">
+                <h1 class="logo">Scream.</h1>
+            </header>
+
+            <!-- Create Post (Inline) -->
+            <div class="create-post-card glass-panel">
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User">
+                </div>
+                <div class="input-area">
+                    <textarea placeholder="What's screaming in your mind?" id="post-input"></textarea>
+                    <div class="post-actions">
+                        <button class="icon-btn"><i class="fa-solid fa-globe"></i></button>
+                        <button class="btn-primary" id="submit-post">Post</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts Feed -->
+            <div id="posts-stream">
+                <!-- Posts will be injected here via JS -->
+
+                <!-- Example Static Post Design -->
+                <article class="post-card glass-panel">
+                    <div class="post-header">
+                        <div class="user-info">
+                            <img src="https://ui-avatars.com/api/?name=Alex+M&background=0D8ABC&color=fff" alt="Avatar"
+                                class="avatar-sm">
+                            <div>
+                                <h3 class="username">Alex M. <span class="handle">@alex_m</span></h3>
+                                <span class="timestamp">2h ago</span>
+                            </div>
+                        </div>
+                        <button class="more-options"><i class="fa-solid fa-ellipsis"></i></button>
+                    </div>
+                    <div class="post-content">
+                        <p>Sometimes silence is the loudest scream. Just deployed the new version of the app. It's
+                            feeling incredibly smooth! 🚀 #coding #webdev</p>
+                    </div>
+                    <div class="post-footer">
+                        <button class="action-btn"><i class="fa-regular fa-heart"></i> <span>24</span></button>
+                        <button class="action-btn"><i class="fa-regular fa-comment"></i> <span>5</span></button>
+                        <button class="action-btn"><i class="fa-solid fa-share-nodes"></i></button>
+                    </div>
+                </article>
+
+                <article class="post-card glass-panel">
+                    <div class="post-header">
+                        <div class="user-info">
+                            <img src="https://ui-avatars.com/api/?name=Ghost+User&background=333&color=fff" alt="Avatar"
+                                class="avatar-sm">
+                            <div>
+                                <h3 class="username">Anonymous <span class="handle">@anon</span></h3>
+                                <span class="timestamp">5h ago</span>
+                            </div>
+                        </div>
+                        <button class="more-options"><i class="fa-solid fa-ellipsis"></i></button>
+                    </div>
+                    <div class="post-content">
+                        <p>Is anyone else hearing that hum? The database query seems to be taking longer than
+                            expected...</p>
+                    </div>
+                    <div class="post-footer">
+                        <button class="action-btn"><i class="fa-regular fa-heart"></i> <span>12</span></button>
+                        <button class="action-btn"><i class="fa-regular fa-comment"></i> <span>2</span></button>
+                        <button class="action-btn"><i class="fa-solid fa-share-nodes"></i></button>
+                    </div>
+                </article>
+            </div>
+        </main>
+
+        <!-- Right Widgets -->
+        <aside class="sidebar-right glass-panel">
+            <h3>Trending in Scream</h3>
+            <ul class="trending-list">
+                <li>
+                    <span class="category">Technology</span>
+                    <h4>#ScreamApp</h4>
+                    <span class="count">2.5k Posts</span>
+                </li>
+                <li>
+                    <span class="category">Design</span>
+                    <h4>Glassmorphism</h4>
+                    <span class="count">1.2k Posts</span>
+                </li>
+                <li>
+                    <span class="category">Life</span>
+                    <h4>#MondayMotivation</h4>
+                    <span class="count">800 Posts</span>
+                </li>
+            </ul>
+        </aside>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+
+</html>
