@@ -1,4 +1,4 @@
-# Scream
+# Scream 🐙
 
 An experimental, text-first micro‑blogging platform built with **PHP** and **MySQL** (started in 2025). Scream is intentionally minimal: it focuses on written expression, fast performance, and small, auditable data models —  image uploads and optional anonymity.
 
