@@ -25,3 +25,16 @@ Build command:
 .\gradlew.bat :app:assembleDebug
 ```
 
+
+# Git Commit Rules
+- Treat every meaningful change as a separate development task.
+- Break large features into smaller milestones whenever practical.
+- Create separate commits for project setup, UI changes, backend logic, database updates, API integration, bug fixes, refactoring, documentation, tests, performance improvements, and configuration changes.
+- Each commit should represent one logical unit of work that could be understood or reverted independently.
+- Use clear, descriptive commit messages following conventional style where appropriate (e.g., feat:, fix:, refactor:, docs:, style:, test:, chore:).
+- When implementing a large feature, complete it in incremental stages and commit after each completed stage rather than waiting until everything is finished.
+- Avoid mixing unrelated changes in the same commit.
+- If multiple files are modified for a single feature, include them in one commit only if they belong to that same logical change.
+- Before creating a commit, review the staged files and ensure they all serve the same purpose.
+- Prioritize an accurate, readable, and maintainable Git history over minimizing the number of commits.
+- Whenever possible, suggest the next logical commit boundary before continuing development.
