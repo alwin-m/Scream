@@ -97,6 +97,8 @@ This is the per-file map future agents should use before opening code. Paths are
 | `app/src/main/java/com/scream/app/network/BleGattServer.kt` | GATT server service, write/notify characteristics, chunking, connected device notifications. | BLE server/protocol tasks. | UUIDs are fixed and must not change lightly. |
 | `app/src/main/java/com/scream/app/network/BluetoothBootReceiver.kt` | Starts foreground service on Bluetooth ON or boot when Bluetooth is enabled. | Boot/toggle behavior. | Manifest exports receiver for system broadcasts. |
 | `app/src/main/java/com/scream/app/network/TransportManager.kt` | Transport availability helper and priority list. | Transport preference/status tasks. | It detects availability but does not own actual transport lifecycle. |
+| `app/src/main/java/com/scream/app/network/transport/Transport.kt` | Platform-neutral opaque-byte transport contract and peer address model. | Adding or implementing LAN, BLE, Nearby, Wi-Fi Direct, or desktop transports. | Keep message semantics above this boundary. |
+| `app/src/main/java/com/scream/app/network/transport/TransportCoordinator.kt` | Registration, discovery fan-out, and inbound callback fan-out for transports. | Wiring multiple transport implementations into shared mesh lifecycle. | Does not choose routing policy. |
 
 ## Identity
 
@@ -125,4 +127,14 @@ This is the per-file map future agents should use before opening code. Paths are
 | --- | --- | --- | --- |
 | `docs/PROJECT_PLAN.md` | Vision, milestones, target architecture, privacy rules, roadmap. | Product planning, roadmap context. | Some current-state statements are older than current BLE implementation. |
 | `docs/ai-context/*` | This routing and implementation documentation pack. | Every AI maintenance task. | Keep current as source behavior changes. |
+
+## Compose Multiplatform Foundation
+
+| File | Contains | Read When | Update Notes |
+| --- | --- | --- | --- |
+| `shared/build.gradle.kts` | Kotlin Multiplatform Android/Desktop library configuration and shared Compose dependencies. | Shared UI, common models, or platform target tasks. | Keep platform-specific APIs out of `commonMain`. |
+| `shared/src/commonMain/kotlin/com/scream/shared/ScreamApp.kt` | Shared Compose application shell. | Migrating Android screens into common UI. | Replace the shell incrementally with shared navigation and feature screens. |
+| `shared/src/commonMain/kotlin/com/scream/shared/Platform.kt` | Common platform capability contract. | Adding cross-platform platform services. | Add implementations in platform source sets. |
+| `desktopApp/build.gradle.kts` | Desktop JVM application packaging and entry point configuration. | Desktop build/run tasks. | Desktop platform services belong in this module or a desktop source set. |
+| `desktopApp/src/main/kotlin/com/scream/desktop/Main.kt` | Desktop window entry point. | Desktop startup/window tasks. | Keep app composition in shared code. |
 

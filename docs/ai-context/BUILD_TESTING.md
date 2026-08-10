@@ -4,6 +4,7 @@
 
 - Android Gradle Plugin: 8.3.0
 - Kotlin Android plugin: 1.9.22
+- Compose Multiplatform plugin: 1.6.10
 - Gradle wrapper: 8.7
 - compileSdk: 34
 - targetSdk: 34
@@ -26,6 +27,7 @@ Defined in `app/build.gradle.kts`:
 - Lifecycle ViewModel Compose
 - Material Icons Extended
 - JUnit and Android test dependencies
+- Shared KMP UI: Compose Runtime, Foundation, Material 3, and UI
 
 ## Build Commands
 
@@ -33,6 +35,18 @@ Debug APK:
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
+```
+
+Compose Multiplatform foundation checks:
+
+```powershell
+.\gradlew.bat :shared:compileKotlinDesktop :desktopApp:compileKotlin
+```
+
+Run the desktop application with:
+
+```powershell
+.\gradlew.bat :desktopApp:run
 ```
 
 APK output:
@@ -70,6 +84,11 @@ Suggested verification by task type:
 - Network/BLE change: build, install on two Android devices, test same Wi-Fi LAN, then test BLE discovery/message path.
 - Web change: run `python web\server.py` and exercise browser flows.
 - Manifest/permission change: test on Android 12+ and Android 13+ devices/emulators if possible.
+
+Startup permissions are intentionally staged. The activity requests nearby-discovery
+permissions only; microphone and camera permissions are requested by the voice/photo
+flows when the user invokes them. The app does not automatically open the system
+battery-optimization settings screen on launch.
 
 ## Generated Artifacts
 

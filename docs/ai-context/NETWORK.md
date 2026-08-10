@@ -12,6 +12,20 @@ SCREAM currently uses both LAN and BLE paths:
 
 The central protocol owner is `P2pMeshEngine.kt`.
 
+## Transport Boundary
+
+The transport layer now has an additive platform boundary in
+`network/transport/Transport.kt`. A `Transport` moves opaque bytes and exposes
+peer discovery, connection, sending, and receive callbacks. It must not know
+about SCREAM message types, encryption, TTL, deduplication, or persistence.
+
+`TransportCoordinator` provides registration and fan-out discovery for future
+LAN, BLE, Nearby Connections, Wi-Fi Direct, and desktop mDNS/BLE
+implementations. The current `P2pMeshEngine` remains the runtime owner of LAN
+and BLE behavior in this milestone; the existing protocol adapters and engine
+are intentionally unchanged so the boundary can be adopted transport by
+transport without changing current message delivery.
+
 ## Multi-Protocol Architecture
 
 SCREAM uses a layered multi-protocol architecture:
