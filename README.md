@@ -25,6 +25,22 @@ In SCREAM, every message you send is a **scream** — a local voice in the nearb
 - Manual delete button for your own chat messages.
 - Blue SCREAM app icon and theme.
 
+## Compose Multiplatform Foundation
+
+SCREAM is being migrated incrementally to a shared Compose Multiplatform architecture:
+
+- `shared/` contains common Compose UI and platform-neutral contracts.
+- `desktopApp/` is the desktop JVM application entry point.
+- `app/` remains the existing Android product while screens and business logic move into `shared/src/commonMain`.
+
+Build the shared and desktop foundation with:
+
+```powershell
+.\gradlew.bat :shared:compileKotlinDesktop :desktopApp:compileKotlin
+```
+
+The first shared shell is intentionally small. Existing Android feed, rooms, chat, identity, and mesh features remain available during migration.
+
 ## Important Network Note
 
 The current app has a working local P2P foundation over LAN discovery and TCP message sharing. The source also includes BLE advertising/scanning plus a BLE GATT client/server transport foundation. Production-grade Bluetooth UX, permission education, and file/document transfer are still roadmap work.
