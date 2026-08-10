@@ -29,6 +29,9 @@ import com.scream.app.model.BackgroundMode
 import com.scream.app.model.BatteryVisibility
 import com.scream.app.ui.theme.*
 import kotlinx.coroutines.launch
+import com.scream.app.ui.components.PreparingBottomSheet
+import com.scream.app.ui.components.SearchingItemsBottomSheet
+import com.scream.app.ui.components.StepProgressTracker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +48,10 @@ fun SettingsScreen(
     val isAutoDeepSleep = profile?.isAutoDeepSleepEnabled ?: true
     val threshold = profile?.autoDeepSleepThreshold ?: 20
     val isOffline = profile?.isPermanentOffline ?: false
+
+    var showSearchingOverlay by remember { mutableStateOf(false) }
+    var showPreparingOverlay by remember { mutableStateOf(false) }
+    var showStepTracker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -253,6 +260,62 @@ fun SettingsScreen(
                     }
                 }
             }
+            // ── Section 5: UI/UX Demos ──────────────────────────────────────
+            item {
+                SettingsSectionHeader(title = "UI/UX Components Showcase", icon = Icons.Default.Person)
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    color = ScreamSurfaceVariant,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            "Preview the new custom components:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ScreamTextSecondary
+                        )
+                        
+                        Button(
+                            onClick = { showSearchingOverlay = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
+                        ) {
+                            Text("Searching Items Sheet")
+                        }
+                        
+                        Button(
+                            onClick = { showPreparingOverlay = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
+                        ) {
+                            Text("Preparing Overlay")
+                        }
+                        
+                        Button(
+                            onClick = { showStepTracker = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
+                        ) {
+                            Text("Step Tracker (Recruiter)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showSearchingOverlay) {
+        SearchingItemsBottomSheet(onDismiss = { showSearchingOverlay = false })
+    }
+
+    if (showPreparingOverlay) {
+        PreparingBottomSheet(onStop = { showPreparingOverlay = false })
+    }
+
+    if (showStepTracker) {
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showStepTracker = false }) {
+            StepProgressTracker()
         }
     }
 }
