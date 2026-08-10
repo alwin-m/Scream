@@ -1,178 +1,118 @@
-# Scream  🐙 
+# SCREAM 🐙
 
-An experimental, text-first micro‑blogging platform built with **PHP** and **MySQL** (started in 2025). Scream is intentionally minimal: it focuses on written expression, fast performance, and small, auditable data models —  image uploads and optional anonymity.
+SCREAM is an offline-first peer-to-peer communication app for hostels, campuses, events, and nearby communities. The idea is simple: when there is no internet, people should still be able to speak, share, and connect.
 
----
+In SCREAM, every message you send is a **scream** — a local voice in the nearby mesh. The name and blue logo represent free expression: say what matters, even when networks are unavailable.
 
-## What it is
+## Aim
 
-Scream is a lightweight social experiment that brings conversation back to words. Users post short text messages and interact via comments and basic moderation tools. The goal is a clean, quiet place for honest expression.
+- Protect freedom of speech through local-first communication.
+- Make P2P messaging understandable for everyone.
+- Help nearby users discover each other without depending on a central server.
+- Support public nearby posts, rooms, private chats, and future document sharing.
+- Keep data local on the device and automatically remove old content.
 
----
+## Current Features
 
-## Key principles
+- Profile onboarding with alias and avatar.
+- Nearby public feed for screams/posts.
+- Rooms for group conversations.
+- Private rooms with nearby peers.
+- Local-network peer discovery and message sharing.
+- Message envelopes with IDs, timestamps, TTL, and duplicate filtering.
+- Local persistence for posts and chat messages.
+- Automatic cleanup after 48 hours.
+- Manual delete button for your own chat messages.
+- Blue SCREAM app icon and theme.
 
-* **Text-first**:  images, no videos — only text and images content.
-* **Minimal UI**: fast, simple pages focused on reading and writing.
-* **Privacy-minded**: optional anonymous posting and strict moderation controls.
-* **Easy to self-host**: plain PHP + MySQL, works on most shared hosts or a small VPS.
+## Important Network Note
 
----
+The current app has a working local P2P foundation over LAN discovery and TCP message sharing. The source also includes BLE advertising/scanning plus a BLE GATT client/server transport foundation. Production-grade Bluetooth UX, permission education, and file/document transfer are still roadmap work.
 
-## Features (MVP)
+The scalable direction is a mesh:
 
-* Anonymous text posts
-* Chronological feed
-* Comments
-* Likes (tracked with timestamps)
-* View tracking (who/when a post was viewed)
-* Basic reporting system for moderation
-* Simple authentication and session tracking
+- Each phone connects only to nearby peers.
+- Messages are forwarded with TTL/hop limits.
+- Duplicate message IDs prevent loops.
+- The network grows as more people nearby install the app.
 
----
+A single phone cannot directly connect to millions or billions of devices. The powerful version is many nearby devices forwarding safely as a mesh.
 
-## Database snapshot
+## APK Location
 
-The screenshot below shows the **`tbl_users`** table (user/account schema) currently in the database. This is the first table created; additional tables for posts, comments, likes, views, reports, and sessions will be added and documented with screenshots in subsequent commits.
+After building, the debug APK is created here:
 
-### **Table: `tbl_users`**
-
-The core user/account storage for Scream.
-
-#### **SQL Definition**
-
-```sql
-CREATE TABLE tbl_users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    dob DATE DEFAULT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME DEFAULT NULL,
-    status ENUM('active','banned','inactive') DEFAULT 'active',
-    profile_visibility ENUM('public','private') DEFAULT 'public'
-);
+```text
+app/build/outputs/apk/debug/app-debug.apk
 ```
 
-#### **Column Details**
+This project also keeps a convenient copy at:
 
-| Column Name            | Type                    | Description                        |
-| ---------------------- | ----------------------- | ---------------------------------- |
-| **id**                 | INT, PK, AUTO_INCREMENT | Unique user ID                     |
-| **username**           | VARCHAR(50), UNIQUE     | Visible name for login + display   |
-| **email**              | VARCHAR(100), UNIQUE    | User email address                 |
-| **password_hash**      | VARCHAR(255)            | Secure hashed password             |
-| **dob**                | DATE                    | Optional date of birth             |
-| **created_at**         | DATETIME                | Auto timestamp on creation         |
-| **last_login**         | DATETIME                | Timestamp of last login            |
-| **status**             | ENUM                    | User state: active/banned/inactive |
-| **profile_visibility** | ENUM                    | public/private profile             |
-
-![tbl\_users table screenshot](https://github.com/user-attachments/assets/2450ea45-159c-428e-81da-4ad25a6e9e4d)
-
----
-
-## Table: `tbl_posts`
-
-Stores all written posts.
-
-### **SQL Definition**
-
-```sql
-CREATE TABLE tbl_posts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    content TEXT NOT NULL,
-    image VARCHAR(255) DEFAULT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_deleted TINYINT(1) DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES tbl_users(id)
-);
+```text
+SCREAM-debug.apk
 ```
 
-### **Column Details**
+## Build APK
 
-| Column Name    | Type                    | Description               |
-| -------------- | ----------------------- | ------------------------- |
-| **id**         | INT, PK, AUTO_INCREMENT | Unique post ID            |
-| **user_id**    | INT, FK                 | References `tbl_users.id` |
-| **content**    | TEXT                    | The main post text        |
-| **image**      | VARCHAR(255), NULL      | Optional image path       |
-| **created_at** | DATETIME                | Auto timestamp            |
-| **updated_at** | DATETIME                | Auto-updated on edit      |
-| **is_deleted** | TINYINT(1)              | Soft delete flag          |
+From the project root:
 
-<img width="1187" height="300" alt="Screenshot 2025-11-20 141209" src="https://github.com/user-attachments/assets/eb5ff0f7-eae2-4213-824b-9228a5bce80d" />
-
----
-
-## Table: `tbl_comments`
-
-Stores all comments on posts, including threaded replies.
-
-### **SQL Definition**
-
-```sql
-CREATE TABLE tbl_comments (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    post_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    parent_id BIGINT DEFAULT NULL,
-    content TEXT NOT NULL,
-    is_edited TINYINT(1) DEFAULT 0,
-    is_deleted TINYINT(1) DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NULL DEFAULT NULL,
-    FOREIGN KEY (post_id) REFERENCES tbl_posts(id),
-    FOREIGN KEY (user_id) REFERENCES tbl_users(id),
-    FOREIGN KEY (parent_id) REFERENCES tbl_comments(id)
-);
+```powershell
+.\gradlew.bat :app:assembleDebug
 ```
 
-### **Column Details**
+Then copy the APK if needed:
 
-| Column Name    | Type                       | Description                                  |
-| -------------- | -------------------------- | -------------------------------------------- |
-| **id**         | BIGINT, PK, AUTO_INCREMENT | Unique comment ID                            |
-| **post_id**    | BIGINT, FK                 | References tbl_posts.id                      |
-| **user_id**    | BIGINT, FK                 | References tbl_users.id                      |
-| **parent_id**  | BIGINT, FK/NULL            | If NULL = top-level comment; otherwise reply |
-| **content**    | TEXT                       | Comment text                                 |
-| **is_edited**  | TINYINT(1)                 | 1 = edited, 0 = original                     |
-| **is_deleted** | TINYINT(1)                 | Soft delete flag                             |
-| **created_at** | DATETIME                   | Timestamp of creation                        |
-| **updated_at** | DATETIME                   | Timestamp when edited                        |
+```powershell
+Copy-Item app\build\outputs\apk\debug\app-debug.apk SCREAM-debug.apk -Force
+```
 
-<img width="1226" height="362" alt="Screenshot 2025-11-21 002934" src="https://github.com/user-attachments/assets/d3c6e425-1d7c-48a3-b10c-8a24a5b11498" />
+On a normal developer machine with Gradle installed, this also works:
 
+```powershell
+gradle :app:assembleDebug
+```
 
----
+## Install APK
 
-## Setup (quick)
+Connect an Android phone with USB debugging enabled, then run:
 
-1. Clone the repo: `git clone <repo-url>`
-2. Import the SQL schema into phpMyAdmin or MySQL CLI.
-3. Update DB settings in `config.php`.
-4. Start PHP/Apache and open in a browser.
+```powershell
+adb install -r SCREAM-debug.apk
+```
 
----
+Or manually copy `SCREAM-debug.apk` to your phone and open it from the file manager.
 
-## Contributing
+## Run For Testing
 
-Contributions are welcome. Submit issues or PRs. Suggested early tasks:
+1. Install the APK on two Android devices.
+2. Connect both devices to the same Wi‑Fi network.
+3. Open SCREAM and create a profile on each phone.
+4. Watch the mesh status and peer count.
+5. Send a scream/post or create a room.
+6. Messages should appear on nearby connected devices.
 
-* Add server-side validation
-* Improve session handling
-* Add tests for DB and endpoints
+## Data Lifetime
 
----
+SCREAM stores posts and chat messages locally on the phone. Content automatically disappears after 48 hours.
 
-## Vision
+Users can also delete their own chat messages manually.
 
-A calm, durable place where words matter. Future updates add moderation tools and analytics without sacrificing simplicity.
+## Roadmap
 
----
+- True Bluetooth/BLE nearby discovery.
+- Better runtime permission flow.
+- Delivery status and retry queue.
+- Local database storage for stronger persistence.
+- Encrypted messages.
+- File/document sharing with accept/decline controls.
+- Production-grade mesh routing across multiple hops.
 
-If you'd like, I can extend this README with ERD diagrams, architecture diagrams, API route documentation, or future table definitions.
+See `docs/PROJECT_PLAN.md` for the full roadmap.
+
+## AI Maintenance Docs
+
+Future AI agents should start with `AGENTS.md` and `docs/ai-context/README.md` before scanning the project. The docs in `docs/ai-context/` map prompts to the exact source areas to inspect, which keeps maintenance work token-efficient.
+
+## License
+
+SCREAM is open source under the MIT License. See `LICENSE`.

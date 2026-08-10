@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCREAM — Offline Mesh Network</title>
+  <meta name="description" content="SCREAM is a free speech, anonymous, peer-to-peer microblogging & messaging mesh platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ONBOARDING SCREEN -->
+  <div id="screen-onboarding" class="screen active">
+    <div class="onboarding-bg">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+    </div>
+    <div class="onboarding-card">
+      <div class="logo-mark">
+        <span class="logo-s">S</span>
+      </div>
+      <h1 class="onboarding-title">SCREAM</h1>
+      <p class="onboarding-sub">Free Speech. No Censorship. Offline P2P Mesh.</p>
+
+      <div class="avatar-picker">
+        <div class="avatar-display" id="avatar-display">😎</div>
+        <p class="avatar-hint">Select your avatar</p>
+        <div class="emoji-grid" id="emoji-grid">
+          <span class="emoji-opt" data-emoji="😎">😎</span>
+          <span class="emoji-opt" data-emoji="🔥">🔥</span>
+          <span class="emoji-opt" data-emoji="👻">👻</span>
+          <span class="emoji-opt" data-emoji="🤖">🤖</span>
+          <span class="emoji-opt" data-emoji="🦁">🦁</span>
+          <span class="emoji-opt" data-emoji="🐺">🐺</span>
+          <span class="emoji-opt" data-emoji="🦊">🦊</span>
+          <span class="emoji-opt" data-emoji="⚡">⚡</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="input-alias">Anonymous Alias</label>
+        <input type="text" id="input-alias" placeholder="e.g. Maverick, Shadow" maxlength="20" />
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label for="input-age">Age (Optional)</label>
+          <input type="number" id="input-age" placeholder="24" min="1" max="120" />
+        </div>
+        <div class="input-group">
+          <label for="select-gender">Gender (Optional)</label>
+          <select id="select-gender">
+            <option value="Unspecified">Prefer not to say</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Non-binary">Non-binary</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-enter" class="btn-primary">Enter the Mesh Network</button>
+    </div>
+  </div>
+
+  <!-- MAIN APP SCREEN -->
+  <div id="screen-app" class="screen">
+    <!-- Top Header Navigation -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-small">S</div>
+        <span class="brand-name">SCREAM</span>
+        <div class="status-badge" id="net-status-badge">
+          <span class="status-dot green"></span>
+          <span class="status-text" id="net-status-text">Network Active</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btn-peers" class="btn-peer-count" title="View Mesh Topology & Diagnostics">
+          <span class="peer-icon">📡</span>
+          <span id="txt-peer-count">1 Peer</span>
+        </button>
+        <button id="btn-web-bt" class="btn-accent" title="Scan Nearby Bluetooth Devices">
+          <span>🔵 Web BT Scan</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Bar (4 Tabs matching Android) -->
+    <nav class="app-nav-tabs">
+      <button class="nav-tab active" data-tab="feed">
+        <span class="tab-icon">📢</span> Feed
+      </button>
+      <button class="nav-tab" data-tab="rooms">
+        <span class="tab-icon">💬</span> Rooms
+      </button>
+      <button class="nav-tab" data-tab="private">
+        <span class="tab-icon">🔒</span> Private
+      </button>
+      <button class="nav-tab" data-tab="profile">
+        <span class="tab-icon">👤</span> Profile
+      </button>
+    </nav>
+
+    <div class="app-body">
+      <!-- TAB 1: FEED -->
+      <section id="tab-feed" class="tab-content active">
+        <!-- Post Composer Card -->
+        <div class="card composer-card">
+          <div class="composer-header">
+            <span class="user-avatar-small" id="composer-avatar">😎</span>
+            <span class="composer-title">Broadcast to the mesh...</span>
+          </div>
+          <textarea id="composer-text" placeholder="Speak your mind freely. No censorship..." rows="3"></textarea>
+          
+          <!-- Attachment Preview Container -->
+          <div id="attachment-preview" class="attachment-preview hidden">
+            <img id="preview-image" src="" class="hidden" />
+            <div id="preview-audio" class="audio-waveform-bar hidden">
+              <button id="btn-play-recorded-audio" class="btn-circle-sm">▶</button>
+              <div class="waveform-lines">
+                <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+              </div>
+              <span id="recorded-audio-duration">0:00</span>
+              <button id="btn-clear-audio" class="btn-clear">✕</button>
+            </div>
+          </div>
+
+          <div class="composer-actions">
+            <div class="action-buttons-left">
+              <label class="btn-icon" title="Attach Photo">
+                📷 <input type="file" id="input-file-photo" accept="image/*" class="hidden-input" />
+              </label>
+              <button id="btn-record-voice" class="btn-icon" title="Record Voice Note">🎙️</button>
+              <span id="recording-indicator" class="recording-pulse hidden">🔴 Recording... <span id="rec-timer">00:00</span></span>
+            </div>
+            <button id="btn-publish-post" class="btn-primary-sm">Publish</button>
+          </div>
+        </div>
+
+        <!-- Feed List -->
+        <div id="feed-list" class="feed-list">
+          <div class="empty-state">No mesh broadcasts yet. Be the first to scream!</div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ROOMS -->
+      <section id="tab-rooms" class="tab-content">
+        <div class="section-header-row">
+          <h2>Public & Private Mesh Rooms</h2>
+          <button id="btn-create-room" class="btn-primary-sm">+ Create Room</button>
+        </div>
+        <div id="rooms-list" class="rooms-grid"></div>
+      </section>
+
+      <!-- TAB 3: PRIVATE CHATS -->
+      <section id="tab-private" class="tab-content">
+        <div class="section-header-row">
+          <h2>Encrypted Private Chats</h2>
+        </div>
+        <div id="private-rooms-list" class="rooms-grid"></div>
+      </section>
+
+      <!-- TAB 4: PROFILE -->
+      <section id="tab-profile" class="tab-content">
+        <div class="card profile-card">
+          <div class="profile-header-center">
+            <div class="profile-avatar-large" id="profile-avatar-display">😎</div>
+            <h2 id="profile-alias-display">Anonymous</h2>
+            <p class="mesh-id-tag" id="profile-mesh-id">SCREAM-#0000</p>
+          </div>
+
+          <div class="profile-stats-row">
+            <div class="stat-box">
+              <span class="stat-num" id="stat-posts">0</span>
+              <span class="stat-lbl">Posts</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num" id="stat-likes">0</span>
+              <span class="stat-lbl">Likes</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-num" id="stat-peers">1</span>
+              <span class="stat-lbl">Nearby</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- CHAT WINDOW OVERLAY -->
+  <div id="overlay-chat" class="overlay hidden">
+    <div class="chat-container">
+      <header class="chat-header">
+        <button id="btn-close-chat" class="btn-back">←</button>
+        <span class="chat-icon" id="chat-room-icon">💬</span>
+        <div class="chat-title-group">
+          <h3 id="chat-room-name">General Mesh</h3>
+          <span class="chat-sub" id="chat-room-sub">1 member online</span>
+        </div>
+      </header>
+      <div id="chat-messages-list" class="chat-messages"></div>
+      <footer class="chat-footer">
+        <input type="text" id="chat-input-text" placeholder="Type an encrypted message..." />
+        <button id="chat-btn-send" class="btn-primary-sm">Send</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- CREATE ROOM MODAL -->
+  <div id="modal-create-room" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h3>Create New Mesh Room</h3>
+      <div class="input-group">
+        <label>Room Name</label>
+        <input type="text" id="modal-room-name" placeholder="e.g. Crypto & Web3" maxlength="30" />
+      </div>
+      <div class="input-group">
+        <label>Room Icon (Emoji)</label>
+        <input type="text" id="modal-room-icon" placeholder="💬" maxlength="2" />
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="modal-room-private" /> Make Private (Invite Only)</label>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel-room" class="btn-secondary">Cancel</button>
+        <button id="btn-confirm-room" class="btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIAGNOSTICS & PEER OVERLAY -->
+  <div id="modal-peers" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h3>Mesh Topology & Peers</h3>
+      <div id="peers-list" class="peers-list-view"></div>
+      <div class="modal-actions">
+        <button id="btn-close-peers" class="btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
