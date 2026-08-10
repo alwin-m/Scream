@@ -28,8 +28,9 @@ import com.scream.app.model.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
@@ -62,6 +63,7 @@ class MeshForegroundService : Service() {
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var meshLifecycleJob: Job? = null
 
     // ──────────────────────────────────────────────────────────────────────────
     // Service lifecycle
@@ -149,6 +151,9 @@ class MeshForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServiceRunning = false
+        meshLifecycleJob?.cancel()
+        meshLifecycleJob = null
+        serviceScope.coroutineContext.cancelChildren()
         Log.d(TAG, "MeshForegroundService destroyed — tearing down mesh")
 
         try { unregisterReceiver(bluetoothStateReceiver) } catch (e: Exception) {}
@@ -164,7 +169,9 @@ class MeshForegroundService : Service() {
     // ──────────────────────────────────────────────────────────────────────────
 
     private fun bootMesh() {
-        serviceScope.launch {
+        if (meshLifecycleJob?.isActive == true) return
+
+        meshLifecycleJob = serviceScope.launch {
             try {
                 // Repository must be initialised before anything else
                 ScreamRepository.init(applicationContext)
