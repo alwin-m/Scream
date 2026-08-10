@@ -20,3 +20,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Scream"
 include(":app")
+include(":shared")
+include(":desktopApp")
