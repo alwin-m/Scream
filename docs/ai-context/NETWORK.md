@@ -104,13 +104,13 @@ Heartbeat shape:
 }
 ```
 
-Discovered LAN peers are stored in `peerMap` with transport `TCP`.
+Discovered LAN peers are stored in a concurrent `peerMap` with transport `TCP`; BLE and LAN updates may arrive on different callback threads.
 
 ### Delivery
 
 `listenTcpServer` opens server socket on port 8889. Each accepted socket is handled by `handleTcpClient`.
 
-Outbound LAN delivery uses `sendToKnownPeers`, which sends the message envelope to every peer in `peerMap` except optional incoming IP and except `ble://` pseudo-address peers.
+Outbound LAN delivery uses `sendToKnownPeers`, which sends the message envelope to every peer in `peerMap` except optional incoming IP and except `ble://` pseudo-address peers. The engine uses connect timeouts, closes sockets during shutdown, and sends heartbeats to both the global and interface broadcast addresses for better Wi-Fi compatibility.
 
 ## BLE Flow In Relation To Network Layer
 

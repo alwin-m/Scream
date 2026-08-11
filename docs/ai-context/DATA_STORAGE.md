@@ -11,6 +11,7 @@ Fields:
 - `id`
 - `alias`
 - `avatar`
+- `profileImage` (optional base64 photo for private conversations; public surfaces use `avatar`)
 - `age`
 - `gender`
 
@@ -81,6 +82,7 @@ Keys:
 - `age`
 - `gender`
 - `emoji_avatar`
+- `profile_image` (optional base64 photo shared in private chat identity metadata)
 - `is_registered`
 
 User registration always generates a fresh UUID.

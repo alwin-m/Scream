@@ -23,7 +23,7 @@ Manifest declares:
 - Notifications: `POST_NOTIFICATIONS`
 - Boot: `RECEIVE_BOOT_COMPLETED`
 
-`MainActivity.requestRequiredPermissions` requests Bluetooth scan/connect/advertise on Android 12+, fine location, and notifications on Android 13+.
+`MainActivity.requestRequiredPermissions` requests Bluetooth scan/connect/advertise on Android 12+, legacy BLE location only on older Android versions, and notifications on Android 13+. Microphone and camera permissions remain feature-scoped.
 
 ## Service Startup
 
@@ -132,5 +132,5 @@ Single-packet threshold:
 - `BluetoothTransferScreen` does not control the real BLE scanner.
 - BLE peer identity comes from message sender metadata after message exchange; scan results themselves only identify devices.
 - GATT connection counts and BLE discovered devices are not currently exposed directly to UI state except through message-driven peer updates and some diagnostic helpers.
-- Permission denial is logged, but service still tries to run.
+- Permission denial is logged, but service still tries to run and can retry discovery later. Delayed GATT reconnects are invalidated when the mesh is stopped so a disabled service cannot silently reconnect.
 

@@ -8,6 +8,7 @@ Registration happens through `OnboardingScreen`.
 - Default avatar fallback: emoji avatar string
 - UUID: random UUID stored in DataStore
 - Runtime app user ID: first four UUID chars uppercased with `#` prefix
+- Public posts and public rooms use the user's emoji avatar. An optional gallery photo is persisted separately and included in private-chat identity metadata.
 
 Main files:
 
@@ -65,6 +66,7 @@ Private rooms:
 - `getOrCreatePrivateRoom(currentUser, peer)` uses ID `private_${peer.id}`.
 - Private room name format is `Private: ${peer.alias}`.
 - Private rooms are still stored in the shared room list.
+- Public room member counts refresh from live mesh peers. Private room counts are based on the owner plus invited members.
 
 ## Chat
 

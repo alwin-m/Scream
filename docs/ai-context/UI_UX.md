@@ -66,6 +66,7 @@ File: `RoomsScreen.kt`
 Responsibilities:
 - Conversation-style room cards with avatar, title, privacy badges (Public/Private), unread badges, and last message previews.
 - Create room dialog with custom styled chip selectors, icons, and privacy filters.
+- Public rooms expose a member view from the chat header; private rooms expose member management and nearby-peer invitations.
 - Filters private rooms: only visible to non-members if they are invited or created it.
 
 ## Chat UI
@@ -79,6 +80,7 @@ Responsibilities:
 - Multiline composer with integrated camera/photo attachment picker and voice recording toggles.
 - Supports replies, image rendering, waveform audio player, reaction overlays, bookmarks, and delivery checkmarks.
 - Selective deletion dialog offers "Delete for Me" and "Delete for Everyone" (which broadcasts deletes) options.
+- Private chats can be started from a nearby user's profile, and private chat bubbles use the optional profile photo while public chat remains emoji-based.
 
 ## Mesh Info Bottom Sheet
 
@@ -100,6 +102,7 @@ Responsibilities:
 - Settings Center trigger button and Bluetooth transfer screen launcher.
 - Background activity mode controls (Active, Deep Sleep, Disabled).
 - Edit Profile button opens an editor allowing the user to update alias, age, gender, and pick a custom image from the photo gallery or select an emoji avatar.
+- Public identity stays on the selected emoji; the optional gallery photo is reserved for private conversations.
 - Dynamic card showing local Bluetooth status.
 - Shortcut to Bluetooth settings.
 
