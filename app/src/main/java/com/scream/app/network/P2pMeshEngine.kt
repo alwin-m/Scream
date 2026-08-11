@@ -10,6 +10,7 @@ import com.scream.app.model.PeerConnectionType
 import com.scream.app.model.PeerTransport
 import com.scream.app.model.ProtocolType
 import com.scream.app.model.User
+import com.scream.app.security.AutoSecurityGuard
 import com.scream.app.network.peer.PeerManager
 import com.scream.app.network.protocol.PeerAddress
 import com.scream.app.network.protocol.PeerRoute
@@ -162,9 +163,20 @@ object P2pMeshEngine {
      * Deliver an incoming BLE GATT message through the same processing pipeline
      * that TCP messages use, so the app is completely transport-agnostic.
      */
-    fun handleIncomingBleMessage(jsonString: String) {
+    fun handleIncomingBleMessage(jsonString: String, endpointAddress: String? = null) {
         try {
             val json = JSONObject(jsonString)
+            val endpoint = endpointAddress?.let { "ble:$it" } ?: "ble:unknown"
+            if (!BitChatProtocolAdapter.isBitChatPayload(json) &&
+                !AutoSecurityGuard.inspect(json, endpoint).accepted
+            ) {
+                quarantineTransport(endpoint)
+                return
+            }
+            if (!isCompatibleBuild(json, endpoint)) {
+                quarantineTransport(endpoint)
+                return
+            }
             val messageId = json.optString("id")
             val sourcePeerId = json.optString("sourcePeerId", json.optString("senderId"))
 
@@ -179,6 +191,7 @@ object P2pMeshEngine {
             if (BitChatProtocolAdapter.isBitChatPayload(json)) {
                 val bitChatPeer = BitChatProtocolAdapter.parseBitChatPeer(json, transport = PeerTransport.BLE)
                 if (bitChatPeer.user.id != currentUser?.id) {
+                    mergeBlePlaceholder(endpointAddress, bitChatPeer.user.id)
                     val now = System.currentTimeMillis()
                     val existing = peerMap[bitChatPeer.user.id]
                     if (existing != null) {
@@ -220,29 +233,36 @@ object P2pMeshEngine {
 
             val senderBattery = senderJson?.optInt("batteryLevel", 85) ?: 85
             val senderOs = senderJson?.optString("osVersion", "Android") ?: "Android"
+            val senderFp = senderJson?.optString("appFingerprint", "")?.takeIf { it.isNotBlank() }
+            val senderCtag = senderJson?.optString("contributorTag", "")?.takeIf { it.isNotBlank() }
 
             // Register the peer as BLE-connected
             if (senderUser != null && senderUser.id != currentUser?.id) {
                 val now = System.currentTimeMillis()
+                mergeBlePlaceholder(endpointAddress, senderUser.id)
                 val existing = peerMap[senderUser.id]
                 if (existing != null) {
                     peerMap[senderUser.id] = existing.copy(
                         lastSeen = now,
                         transport = com.scream.app.model.PeerTransport.BLE,
                         batteryLevel = senderBattery,
-                        osVersion = senderOs
+                        osVersion = senderOs,
+                        appFingerprint = senderFp ?: existing.appFingerprint,
+                        contributorTag = senderCtag ?: existing.contributorTag
                     )
                 } else {
                     peerMap[senderUser.id] = PeerInfo(
                         user = senderUser,
-                        ipAddress = "ble://${senderUser.id}",
+                        ipAddress = "ble://${endpointAddress ?: senderUser.id}",
                         lastSeen = now,
                         transport = com.scream.app.model.PeerTransport.BLE,
                         quality = com.scream.app.model.ConnectionQuality.GOOD,
                         connectionType = com.scream.app.model.PeerConnectionType.DIRECT,
                         signalStrength = -60,
                         batteryLevel = senderBattery,
-                        osVersion = senderOs
+                        osVersion = senderOs,
+                        appFingerprint = senderFp,
+                        contributorTag = senderCtag
                     )
                 }
                 updateRepositoryPeers()
@@ -269,6 +289,7 @@ object P2pMeshEngine {
         scope.launch {
             peerMap.values.toList().forEach { peer ->
                 if (peer.ipAddress == exceptIpAddress) return@forEach
+                if (AutoSecurityGuard.isQuarantined(peer.ipAddress)) return@forEach
                 // Only use TCP for LAN peers (not BLE-only peers with ble:// addresses)
                 if (peer.ipAddress.startsWith("ble://")) return@forEach
                 try {
@@ -504,6 +525,11 @@ object P2pMeshEngine {
             val text = socket.getInputStream().bufferedReader(Charsets.UTF_8).readText()
             if (text.isNotBlank()) {
                 val json = JSONObject(text)
+                val senderIp = socket.inetAddress.hostAddress ?: "tcp:unknown"
+                if (!BitChatProtocolAdapter.isBitChatPayload(json) &&
+                    !AutoSecurityGuard.inspect(json, senderIp).accepted
+                ) return
+                if (!isCompatibleBuild(json, senderIp)) return
                 val messageId = json.optString("id")
                 val sourcePeerId = json.optString("sourcePeerId", json.optString("senderId"))
                 if (messageId.isNotBlank()) {
@@ -511,8 +537,6 @@ object P2pMeshEngine {
                     rememberMessage(messageId)
                 }
                 if (sourcePeerId.isNotBlank() && sourcePeerId == currentUser?.id) return
-
-                val senderIp = socket.inetAddress.hostAddress ?: ""
 
                 if (BitChatProtocolAdapter.isBitChatPayload(json)) {
                     val bitChatPeer = BitChatProtocolAdapter.parseBitChatPeer(
@@ -693,7 +717,9 @@ object P2pMeshEngine {
     }
 
     fun registerBlePeerDiscovered(address: String, name: String, rssi: Int, isBitChat: Boolean = false) {
-        val peerId = if (isBitChat) "bitchat_$address" else "ble_$address"
+        // One physical BLE address is one nearby device, even when it advertises
+        // both SCREAM and BitChat service UUIDs and produces two scan callbacks.
+        val peerId = "ble_$address"
         val now = System.currentTimeMillis()
         val existing = peerMap[peerId]
         val proto = if (isBitChat) ProtocolType.BITCHAT else ProtocolType.SCREAM
@@ -722,8 +748,44 @@ object P2pMeshEngine {
                 signalStrength = rssi,
                 protocol = proto
             )
+            MeshForegroundService.notifyPeerContact(peerUser, rssi, PeerTransport.BLE.displayName)
         }
         updateRepositoryPeers()
+    }
+
+    private fun mergeBlePlaceholder(endpointAddress: String?, userId: String) {
+        if (endpointAddress.isNullOrBlank()) return
+        peerMap.remove("ble_$endpointAddress")
+        // Remove the pre-deduplication key too when upgrading an existing store.
+        peerMap.remove("bitchat_$endpointAddress")
+        peerMap[userId]?.let { peer ->
+            peerMap[userId] = peer.copy(ipAddress = "ble://$endpointAddress")
+        }
+    }
+
+    private fun isCompatibleBuild(json: JSONObject, endpoint: String): Boolean {
+        val peerFingerprint = json.optJSONObject("sender")?.optString("appFingerprint")
+            ?.takeIf { it.isNotBlank() }
+            ?: json.optJSONObject("user")?.optString("appFingerprint")?.takeIf { it.isNotBlank() }
+            ?: return true
+        val local = localFingerprint ?: return true
+        fun signerHash(value: String): String {
+            val parts = value.split(":")
+            return if (parts.size >= 4) parts.dropLast(3).joinToString(":") else value
+        }
+        return if (signerHash(peerFingerprint) == signerHash(local)) {
+            true
+        } else {
+            AutoSecurityGuard.flag(endpoint, "peer build signing certificate mismatch")
+            false
+        }
+    }
+
+    private fun quarantineTransport(endpoint: String) {
+        if (!endpoint.startsWith("ble:")) return
+        val address = endpoint.removePrefix("ble:")
+        BleGattClient.disconnect(address)
+        BleGattServer.disconnectDevice(address)
     }
 
     private fun estimateSignalStrength(ipAddress: String): Int {
@@ -831,14 +893,37 @@ object P2pMeshEngine {
                     )
                 }
             }
+            "POST_VIEW" -> {
+                val postId = data.optString("postId")
+                senderUser?.id?.let { viewerId ->
+                    ScreamRepository.registerPostView(viewerId, postId, shouldBroadcast = false)
+                }
+            }
             "LIKE_POST" -> {
                 val postId = data.optString("postId")
-                val userAlias = data.optString("userAlias", senderUser?.alias ?: "Anonymous")
-                ScreamRepository.likePost(postId, userAlias = userAlias, shouldBroadcast = false)
+                senderUser?.let { actor ->
+                    val reaction = if (data.has("reaction")) data.optString("reaction").takeIf { it == "LIKE" } else "LIKE"
+                    ScreamRepository.applyPostReaction(
+                        postId = postId,
+                        actorId = actor.id,
+                        actorAlias = data.optString("actorAlias", actor.alias),
+                        reaction = reaction,
+                        shouldBroadcast = false
+                    )
+                }
             }
             "DISLIKE_POST" -> {
                 val postId = data.optString("postId")
-                ScreamRepository.dislikePost(postId, shouldBroadcast = false)
+                senderUser?.let { actor ->
+                    val reaction = if (data.has("reaction")) data.optString("reaction").takeIf { it == "DISLIKE" } else "DISLIKE"
+                    ScreamRepository.applyPostReaction(
+                        postId = postId,
+                        actorId = actor.id,
+                        actorAlias = data.optString("actorAlias", actor.alias),
+                        reaction = reaction,
+                        shouldBroadcast = false
+                    )
+                }
             }
             "RESHARE_POST" -> {
                 val postId = data.optString("postId")

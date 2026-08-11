@@ -127,6 +127,12 @@ object BleGattClient {
 
     fun getConnectedCount(): Int = activeGatts.size
 
+    @SuppressLint("MissingPermission")
+    fun disconnect(address: String) {
+        cleanupDevice(address, activeGatts[address] ?: return)
+        reconnectAttempts.remove(address)
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // GATT callbacks — one instance per device
     // ──────────────────────────────────────────────────────────────────────────
@@ -214,7 +220,7 @@ object BleGattClient {
                 characteristic: BluetoothGattCharacteristic,
                 value: ByteArray
             ) {
-                processIncoming(String(value, Charsets.UTF_8))
+                processIncoming(String(value, Charsets.UTF_8), address)
             }
 
             // Legacy callback (Android < 13)
@@ -224,7 +230,7 @@ object BleGattClient {
                 characteristic: BluetoothGattCharacteristic?
             ) {
                 val value = characteristic?.value ?: return
-                processIncoming(String(value, Charsets.UTF_8))
+                processIncoming(String(value, Charsets.UTF_8), address)
             }
         }
     }
@@ -288,15 +294,15 @@ object BleGattClient {
     // Incoming message handling + chunk reassembly
     // ──────────────────────────────────────────────────────────────────────────
 
-    private fun processIncoming(text: String) {
+    private fun processIncoming(text: String, endpointAddress: String) {
         if (text.startsWith("SCHK:")) {
-            reassembleChunk(text)
+            reassembleChunk(text, endpointAddress)
         } else {
-            dispatchToEngine(text)
+            dispatchToEngine(text, endpointAddress)
         }
     }
 
-    private fun reassembleChunk(text: String) {
+    private fun reassembleChunk(text: String, endpointAddress: String) {
         try {
             val parts = text.split(":", limit = 4)
             if (parts.size < 4) return
@@ -317,16 +323,16 @@ object BleGattClient {
                 }.toByteArray()
                 chunkBuffer.remove(shortId)
                 chunkTotals.remove(shortId)
-                dispatchToEngine(String(fullBytes, Charsets.UTF_8))
+                dispatchToEngine(String(fullBytes, Charsets.UTF_8), endpointAddress)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Chunk reassembly error: ${e.message}")
         }
     }
 
-    private fun dispatchToEngine(json: String) {
+    private fun dispatchToEngine(json: String, endpointAddress: String) {
         try {
-            P2pMeshEngine.handleIncomingBleMessage(json)
+            P2pMeshEngine.handleIncomingBleMessage(json, endpointAddress)
         } catch (e: Exception) {
             Log.e(TAG, "Error dispatching to P2pMeshEngine: ${e.message}")
         }

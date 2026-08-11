@@ -88,7 +88,7 @@ object BleGattServer {
             }
             val bytes = value ?: return
             if (bytes.isEmpty()) return
-            processIncoming(String(bytes, Charsets.UTF_8))
+            processIncoming(String(bytes, Charsets.UTF_8), device?.address)
         }
 
         @SuppressLint("MissingPermission")
@@ -228,15 +228,22 @@ object BleGattServer {
 
     fun getConnectedDeviceCount(): Int = connectedDevices.size
 
+    @SuppressLint("MissingPermission")
+    fun disconnectDevice(address: String) {
+        val device = connectedDevices.firstOrNull { it.address == address } ?: return
+        connectedDevices.remove(device)
+        runCatching { gattServer?.cancelConnection(device) }
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Internal — message reassembly and dispatch
     // ──────────────────────────────────────────────────────────────────────────
 
-    private fun processIncoming(text: String) {
+    private fun processIncoming(text: String, endpointAddress: String?) {
         if (text.startsWith("SCHK:")) {
-            reassembleChunk(text)
+            reassembleChunk(text, endpointAddress)
         } else {
-            dispatchToEngine(text)
+            dispatchToEngine(text, endpointAddress)
         }
     }
 
@@ -244,7 +251,7 @@ object BleGattServer {
      * Reassembles chunked BLE packets.
      * Format: SCHK:<shortId>:<index>/<total>:<base64Data>
      */
-    private fun reassembleChunk(text: String) {
+    private fun reassembleChunk(text: String, endpointAddress: String?) {
         try {
             // Split on first 3 colons only (data may contain colons in base64)
             val parts = text.split(":", limit = 4)
@@ -268,16 +275,16 @@ object BleGattServer {
                 val fullJson = String(fullBytes, Charsets.UTF_8)
                 chunkBuffer.remove(shortId)
                 chunkTotals.remove(shortId)
-                dispatchToEngine(fullJson)
+                dispatchToEngine(fullJson, endpointAddress)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Chunk reassembly error: ${e.message}")
         }
     }
 
-    private fun dispatchToEngine(json: String) {
+    private fun dispatchToEngine(json: String, endpointAddress: String?) {
         try {
-            P2pMeshEngine.handleIncomingBleMessage(json)
+            P2pMeshEngine.handleIncomingBleMessage(json, endpointAddress)
         } catch (e: Exception) {
             Log.e(TAG, "Error dispatching BLE message to engine: ${e.message}")
         }

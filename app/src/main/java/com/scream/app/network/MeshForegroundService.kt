@@ -56,11 +56,20 @@ class MeshForegroundService : Service() {
         private const val TAG = "MeshForegroundService"
         private const val NOTIFICATION_ID = 7331
         private const val CHANNEL_ID = "scream_mesh_channel"
+        private const val CONTACT_CHANNEL_ID = "scream_mesh_contacts"
+        private const val CONTACT_NOTIFICATION_ID = 7332
 
         @Volatile
         private var isServiceRunning = false
 
         fun isRunning(): Boolean = isServiceRunning
+
+        @Volatile
+        private var instance: MeshForegroundService? = null
+
+        fun notifyPeerContact(peer: User, signalStrength: Int, transport: String) {
+            instance?.postPeerContactNotification(peer, signalStrength, transport)
+        }
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -104,6 +113,7 @@ class MeshForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         isServiceRunning = true
+        instance = this
         Log.d(TAG, "MeshForegroundService created")
 
         createNotificationChannel()
@@ -152,6 +162,7 @@ class MeshForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServiceRunning = false
+        instance = null
         meshLifecycleJob?.cancel()
         meshLifecycleJob = null
         serviceScope.coroutineContext.cancelChildren()
@@ -305,7 +316,51 @@ class MeshForegroundService : Service() {
                 setShowBadge(false)
             }
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java)?.createNotificationChannel(
+                NotificationChannel(
+                    CONTACT_CHANNEL_ID,
+                    "Nearby mesh contacts",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Alerts when a new SCREAM peer is detected nearby"
+                    setShowBadge(true)
+                }
+            )
         }
+    }
+
+    private fun postPeerContactNotification(peer: User, signalStrength: Int, transport: String) {
+        val openAppIntent = PendingIntent.getActivity(
+            this, 1, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val proximity = when {
+            signalStrength >= -55 -> "Very strong signal"
+            signalStrength >= -72 -> "Good nearby signal"
+            else -> "Weak nearby signal"
+        }
+        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, CONTACT_CHANNEL_ID)
+                .setContentTitle("${peer.avatar} ${peer.alias} is nearby")
+                .setContentText("$proximity · $transport")
+                .setStyle(Notification.BigTextStyle().bigText("${peer.alias} appeared on your local mesh. $proximity over $transport. Signal strength is an estimate, not a distance measurement."))
+                .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+                .setContentIntent(openAppIntent)
+                .setAutoCancel(true)
+                .setCategory(Notification.CATEGORY_EVENT)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this)
+                .setContentTitle("${peer.avatar} ${peer.alias} is nearby")
+                .setContentText("$proximity · $transport")
+                .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+                .setContentIntent(openAppIntent)
+                .setAutoCancel(true)
+                .build()
+        }
+        (getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
+            ?.notify(CONTACT_NOTIFICATION_ID + (peer.id.hashCode() and 0x3FF), notification)
     }
 
     @SuppressLint("ObsoleteSdkInt")
