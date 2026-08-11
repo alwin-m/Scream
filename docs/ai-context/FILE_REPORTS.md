@@ -99,6 +99,9 @@ This is the per-file map future agents should use before opening code. Paths are
 | `app/src/main/java/com/scream/app/network/TransportManager.kt` | Transport availability helper and priority list. | Transport preference/status tasks. | It detects availability but does not own actual transport lifecycle. |
 | `app/src/main/java/com/scream/app/network/transport/Transport.kt` | Platform-neutral opaque-byte transport contract and peer address model. | Adding or implementing LAN, BLE, Nearby, Wi-Fi Direct, or desktop transports. | Keep message semantics above this boundary. |
 | `app/src/main/java/com/scream/app/network/transport/TransportCoordinator.kt` | Registration, discovery fan-out, and inbound callback fan-out for transports. | Wiring multiple transport implementations into shared mesh lifecycle. | Does not choose routing policy. |
+| `app/src/main/java/com/scream/app/security/AutoSecurityGuard.kt` | Fail-closed mesh envelope validation, rate limiting, strikes, and temporary route quarantine. | Threat response, malformed traffic, replay/abuse controls. | Keep protocol limits aligned with `NETWORK.md`; do not treat this as cryptographic key exchange. |
+| `app/src/main/java/com/scream/app/security/BuildIntegrity.kt` | APK signing certificate fingerprint and build trust checks. | Build authenticity and peer/update trust tasks. | Pin the real release certificate before production; placeholders are not trusted. |
+| `app/src/main/java/com/scream/app/security/UpdateIntegrityEngine.kt` | OTA/update manifest verification. | Update acceptance and integrity tasks. | Reject missing or unverified signing data. |
 
 ## Identity
 
@@ -107,7 +110,8 @@ This is the per-file map future agents should use before opening code. Paths are
 | `app/src/main/java/com/scream/app/identity/UserPreferencesRepository.kt` | DataStore keys and `UserProfile`, `registerUser`. | Profile persistence/onboarding fields. | Stores UUID, alias, age, gender, emoji avatar, registered flag. |
 | `app/src/main/java/com/scream/app/identity/IdentityViewModel.kt` | AndroidViewModel wrapping identity repository. | Onboarding/profile state tasks. | Exposes nullable `StateFlow<UserProfile?>`. |
 | `app/src/main/java/com/scream/app/identity/OnboardingScreen.kt` | Compose onboarding form. | Registration UI, alias/avatar/age/gender UX. | Calls `register` then navigation callback. |
-| `app/src/main/java/com/scream/app/identity/IdentityManager.kt` | Dual identity manager: SCREAM UUID + BitChat Ed25519 keypair. Key generation, storage, cross-protocol linking. | Identity management, BitChat setup, key operations. | Private key stored in DataStore (MVP); upgrade to Android Keystore later. |
+| `app/src/main/java/com/scream/app/identity/IdentityManager.kt` | Dual identity manager: SCREAM UUID + BitChat Ed25519 keypair. Key generation, storage, cross-protocol linking. | Identity management, BitChat setup, key operations. | Private key is wrapped through `SecureIdentityStore`; legacy raw keys migrate on read. |
+| `app/src/main/java/com/scream/app/identity/SecureIdentityStore.kt` | Android Keystore AES-GCM wrapper for identity key material stored in DataStore. | Identity key storage and migration tasks. | Keep the Keystore alias stable; legacy raw keys are migrated on read. |
 | `app/src/main/java/com/scream/app/identity/BitChatIdentity.kt` | BitChat Ed25519 public key + 8-byte truncated sender ID model. | BitChat identity display, packet encoding. | Sender ID = first 8 bytes of SHA-256(publicKey). |
 
 

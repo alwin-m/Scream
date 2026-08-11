@@ -23,13 +23,23 @@ Files:
 
 The app is **dark-only** per production guidelines. It uses a clean, near-black palette with electric blue-to-violet gradients. Status and navigation bars are rendered transparently. Fonts utilize system SansSerif (Roboto) metrics with polished letter spacing.
 
+UX language must stay precise: show “signal estimate” rather than physical
+distance, “discovered” rather than trusted, and “queued/relayed/delivered” as
+distinct message states. Future story capsules should use public avatars by
+default, explicit audience labels, an expiry indicator, and no autoplay when
+the device is offline or on metered power.
+
 ## Main Home Shell
 
 File: `HomeScreen.kt`
 
 Responsibilities:
 - Top app bar showing SCREAM brand logo and a live Bluetooth connection status pill.
+- Compact mesh activity island is placed inside the top app bar, with peer count and
+  a tap target for mesh diagnostics; it does not float over page content.
 - Navigation bar with filled/outline active states.
+- The selected tab is saveable, so returning from a room or private chat keeps
+  the user on the originating Rooms or Private tab.
 - Opens `MeshInfoBottomSheet` when tapping the status pill.
 - Opens `UserProfileDialog` when selecting a mesh peer.
 
@@ -99,12 +109,15 @@ Responsibilities:
 - User avatar, alias, short ID, stats row (Posts, Likes, Reshares breakdown).
 - **Security Identity Card**: Displays local SCREAM Mesh ID, user short ID, AES-256-GCM encryption status, and one-tap copy-to-clipboard functionality.
 - **Live Mesh Topology Map**: Custom offline `Canvas` composable rendering an animated dark circuit-board node graph of the local P2P network. Pulsing local user node at center, satellite peer nodes arranged by transport type (BLE, LAN, BitChat), and tap-to-inspect peer actions.
+- Map legend scrolls horizontally on narrow screens so transport labels remain readable.
 - Settings Center trigger button and Bluetooth transfer screen launcher.
 - Background activity mode controls (Active, Deep Sleep, Disabled).
 - Edit Profile button opens an editor allowing the user to update alias, age, gender, and pick a custom image from the photo gallery or select an emoji avatar.
 - Public identity stays on the selected emoji; the optional gallery photo is reserved for private conversations.
 - Dynamic card showing local Bluetooth status.
 - Shortcut to Bluetooth settings.
+- QR identity dialog generates a public-only identity code with a staged particle
+  reveal, a real scanner, and a confirmation message after decoding.
 
 ## Bluetooth Transfer UI
 

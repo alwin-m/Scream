@@ -2,7 +2,12 @@
 
 ## Product
 
-SCREAM is a nearby-first communication app for local communities such as hostels, classrooms, campuses, and events. It aims to keep public posts, rooms, private chats, and media messages working without a central server.
+SCREAM is an offline-first civilian resilience communication app for internet
+outages, wildfire response, remote field work, transport interruptions, and
+other infrastructure failures. It keeps public posts, rooms, private chats,
+and media messages working across nearby Android devices without requiring a
+central server. Hostels, campuses, and events may be test environments, but
+they are not the product’s primary mission.
 
 ## Current Repository Shape
 
@@ -65,6 +70,8 @@ The shared app shell is intentionally minimal in the first migration stage. Exis
 - `MeshInfoBottomSheet` mixes real peers with simulated display peers for a richer topology visualization.
 - The mesh encryption key is a static app-wide string-derived key, not per-room or per-peer E2E key exchange.
 - Permission handling is staged: nearby-discovery permissions are requested at startup, while microphone/camera access is requested only when the related feature is used. The mesh service can remain visible and retry discovery after a denial.
+- `AutoSecurityGuard` provides fail-closed envelope validation, rate limiting, temporary route quarantine, and build-signing mismatch detection. This is defense-in-depth, not a replacement for per-peer E2E session keys.
+- BitChat private key material is wrapped by Android Keystore; the local database and media blobs still need at-rest encryption work.
 
 ## Roadmap Source
 

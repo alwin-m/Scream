@@ -19,3 +19,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Security and safety notice: SCREAM is experimental software. The MIT License
+does not make any promise that the application is secure, available, private,
+or suitable for emergency, medical, military, legal, or life-critical use.
+See SECURITY.md and SAFETY.md for the project's current threat model and
+operational guidance. This notice does not modify the MIT License above.

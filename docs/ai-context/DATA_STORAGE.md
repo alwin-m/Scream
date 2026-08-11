@@ -129,5 +129,5 @@ Also update network payload creation/parsing if the field should cross devices.
 - No schema migrations.
 - No per-room storage separation.
 - No content index/search beyond in-memory filtering.
-- No encryption at rest.
+- SQLite/media content is not yet encrypted at rest. BitChat private key material is separately wrapped with an Android Keystore AES-GCM key.
 

@@ -1,16 +1,19 @@
 # SCREAM 🐙
 
-SCREAM is an offline-first peer-to-peer communication app for hostels, campuses, events, and nearby communities. The idea is simple: when there is no internet, people should still be able to speak, share, and connect.
+SCREAM is an offline-first, peer-to-peer communication platform for internet outages, wildfire response, remote field work, transport interruptions, and other conditions where ordinary infrastructure is unavailable or unreliable. Nearby Android devices discover one another and carry public posts, rooms, private conversations, voice, and media across a local mesh.
+
+SCREAM is civilian resilience software, not a substitute for emergency services, a military communications system, or a guarantee of delivery.
 
 In SCREAM, every message you send is a **scream** — a local voice in the nearby mesh. The name and blue logo represent free expression: say what matters, even when networks are unavailable.
 
 ## Aim
 
-- Protect freedom of speech through local-first communication.
-- Make P2P messaging understandable for everyone.
-- Help nearby users discover each other without depending on a central server.
-- Support public nearby posts, rooms, private chats, and future document sharing.
-- Keep data local on the device and automatically remove old content.
+- Keep communication available when internet infrastructure fails.
+- Provide public and private communication modes without requiring a central server.
+- Forward messages through nearby devices with bounded hop counts and duplicate suppression.
+- Keep content local by default and expire retained messages and posts after 48 hours.
+- Make security status, transport status, and uncertainty visible to the user.
+- Reduce unnecessary surveillance exposure; SCREAM does not promise anonymity.
 
 ## Current Features
 
@@ -20,8 +23,12 @@ In SCREAM, every message you send is a **scream** — a local voice in the nearb
 - Private rooms with nearby peers.
 - Local-network peer discovery and message sharing.
 - Message envelopes with IDs, timestamps, TTL, and duplicate filtering.
+- Automatic security admission: encrypted-envelope checks, replay/size/rate
+  limits, temporary peer quarantine, build-integrity checks, and route fallback.
+- Keystore-wrapped identity key material and one-device/one-peer BLE deduplication.
 - Local persistence for posts and chat messages.
 - Automatic cleanup after 48 hours.
+- Message routing uses a bounded TTL/hop limit; the 48-hour lifetime is separate from route reach.
 - Manual delete button for your own chat messages.
 - Blue SCREAM app icon and theme.
 
@@ -41,9 +48,18 @@ Build the shared and desktop foundation with:
 
 The first shared shell is intentionally small. Existing Android feed, rooms, chat, identity, and mesh features remain available during migration.
 
+## Platform and technology
+
+The Android app is written in Kotlin with Jetpack Compose and Material 3. It
+uses Android APIs for BLE/GATT, LAN sockets, notifications, DataStore, and
+local SQLite persistence. The current compatibility boundary is `minSdk 26`
+(Android 8.0), `targetSdk 34`, and `compileSdk 34`. Hardware support still
+depends on the device’s Bluetooth, Wi-Fi, background-execution, and
+power-management behavior.
+
 ## Important Network Note
 
-The current app has a working local P2P foundation over LAN discovery and TCP message sharing. The source also includes BLE advertising/scanning plus a BLE GATT client/server transport foundation. Production-grade Bluetooth UX, permission education, and file/document transfer are still roadmap work.
+The current app has a working local P2P foundation over LAN discovery and TCP message sharing. The source also includes BLE advertising/scanning plus a BLE GATT client/server transport foundation. Production-grade Bluetooth UX, permission education, and resumable encrypted file/document transfer are still roadmap work.
 
 The scalable direction is a mesh:
 
@@ -119,11 +135,25 @@ Users can also delete their own chat messages manually.
 - Better runtime permission flow.
 - Delivery status and retry queue.
 - Local database storage for stronger persistence.
-- Encrypted messages.
+- Per-peer/per-room end-to-end session keys using an audited key-exchange design.
 - File/document sharing with accept/decline controls.
 - Production-grade mesh routing across multiple hops.
+- QR bootstrap and encrypted file transfer. QR is an encoding, not an encryption
+  method; every import must be authenticated and user-confirmed.
+- High-assurance per-peer and per-room E2E sessions with audited key exchange.
+- Resumable encrypted file transfer with explicit consent, cancellation, and
+  integrity verification.
+- Offline stories: short-lived local story capsules with an explicit audience,
+  expiry policy, and mesh propagation budget.
+- Mesh-aware local search without uploading a global contact graph.
 
 See `docs/PROJECT_PLAN.md` for the full roadmap.
+
+## Security and safety
+
+Read [SECURITY.md](SECURITY.md) for the threat model and current protections,
+and [SAFETY.md](SAFETY.md) before using SCREAM during an outage or emergency.
+SCREAM is experimental software and must not be the only emergency channel.
 
 ## AI Maintenance Docs
 
@@ -131,4 +161,7 @@ Future AI agents should start with `AGENTS.md` and `docs/ai-context/README.md` b
 
 ## License
 
-SCREAM is open source under the MIT License. See `LICENSE`.
+SCREAM is open source under the MIT License. See `LICENSE`. The license grants
+permission to use and modify the software; it is not a security certification,
+availability guarantee, or authorization to use the app in life-critical
+operations.

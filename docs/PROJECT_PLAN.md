@@ -2,7 +2,9 @@
 
 ## Vision
 
-SCREAM is a nearby-first communication app for students and friends in places like hostels, classrooms, events, and campuses where mobile data may be weak, restricted, expensive, or unavailable.
+SCREAM is an offline-first civilian resilience communication app for internet
+outages, wildfire response, remote field work, transport interruptions, and
+other situations where normal infrastructure is unavailable or unreliable.
 
 The promise is simple: open the app, see people nearby, create or join rooms, chat, and share useful data without needing the internet.
 
@@ -30,6 +32,22 @@ SCREAM should feel more approachable than a technical mesh messenger:
 - Simple room and private chat flows.
 - Visible connection status.
 - Safe defaults for identity and privacy.
+- The UI distinguishes verified facts from estimates: RSSI is not distance, a
+  discovered device is not a trusted identity, and encryption status is not
+  proof of sender authenticity.
+- Security claims must name their boundary and never use unsupported terms
+  such as “military-grade” or “unbreakable.”
+
+## Future story capsules
+
+Stories are a future feature, not part of the current secure transport. The
+intended design is a horizontal, capsule-shaped strip inspired by the supplied
+references, with a clear “You” create action and peer capsules showing only
+the public avatar/emoji by default. Each story must have an explicit audience,
+short expiry, propagation budget, deduplication ID, authenticated encrypted
+media, visible queued/relayed/expired states, and a user-controlled delete
+action. The UI should use restrained motion, high contrast, large touch targets,
+and no autoplay when offline or on metered power.
 
 ## Current State
 

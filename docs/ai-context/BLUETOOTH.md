@@ -61,6 +61,9 @@ Scanning:
 - Filters by SCREAM service UUID.
 - Low power scan mode.
 - On SCREAM result, stores discovered device and calls `BleGattClient.connectToDevice`.
+- A physical address is stored once even when the device advertises both SCREAM
+  and BitChat UUIDs; authenticated GATT messages merge the placeholder into the
+  sender identity.
 
 Bluetooth state receiver:
 
@@ -132,5 +135,5 @@ Single-packet threshold:
 - `BluetoothTransferScreen` does not control the real BLE scanner.
 - BLE peer identity comes from message sender metadata after message exchange; scan results themselves only identify devices.
 - GATT connection counts and BLE discovered devices are not currently exposed directly to UI state except through message-driven peer updates and some diagnostic helpers.
-- Permission denial is logged, but service still tries to run and can retry discovery later. Delayed GATT reconnects are invalidated when the mesh is stopped so a disabled service cannot silently reconnect.
+- Permission denial is logged, but service still tries to run and can retry discovery later. Delayed GATT reconnects are invalidated when the mesh is stopped so a disabled service cannot silently reconnect. Invalid or abusive GATT envelopes are rejected and their route is temporarily quarantined.
 

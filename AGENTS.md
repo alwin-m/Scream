@@ -25,6 +25,24 @@ Build command:
 .\gradlew.bat :app:assembleDebug
 ```
 
+## Product and security guardrails
+
+- Describe SCREAM as civilian resilience software for outages, disasters, and
+  remote field conditions; do not frame it as military-grade or emergency-certified.
+- Preserve the distinction between message retention (48 hours by default) and
+  mesh routing TTL/hop count. Never claim that TTL alone guarantees deletion or
+  delivery.
+- Do not call RSSI a physical distance measurement. Use “signal estimate” or a
+  qualitative proximity band.
+- Treat the current shared AES-GCM mesh key as an explicit limitation. Do not
+  claim Signal-style per-user E2E until audited key exchange and session tests
+  exist.
+- For future stories or file transfer, require audience, expiry, consent,
+  authenticated encryption, deduplication, cancellation, and visible queued/
+  relayed/expired states before adding transport behavior.
+- Keep the MIT license intact. Security notices belong in `SECURITY.md` and
+  `SAFETY.md`; they do not alter the license grant.
+
 
 # Git Commit Rules
 - Treat every meaningful change as a separate development task.

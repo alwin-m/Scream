@@ -84,6 +84,7 @@ Suggested verification by task type:
 - Network/BLE change: build, install on two Android devices, test same Wi-Fi LAN, then test BLE discovery/message path.
 - Web change: run `python web\server.py` and exercise browser flows.
 - Manifest/permission change: test on Android 12+ and Android 13+ devices/emulators if possible.
+- Security/network change: test malformed, plaintext, oversized, stale, rate-limited, and duplicate BLE/LAN envelopes on at least two Android devices.
 
 Startup permissions are intentionally staged. The activity requests nearby-discovery
 permissions only; microphone and camera permissions are requested by the voice/photo

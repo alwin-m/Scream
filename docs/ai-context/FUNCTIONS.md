@@ -17,6 +17,18 @@ Main files:
 - `identity/OnboardingScreen.kt`
 - `ui/MainViewModel.kt`
 
+## QR Identity Sharing
+
+Profile exposes a QR identity dialog for sharing or scanning without typing a
+username. The encoded payload contains only the public SCREAM user ID, alias,
+emoji avatar, and mesh ID. It never contains private photos, private keys, or
+message content. A scan is parsed and shown for user review; scanning alone
+does not authenticate the peer, add a contact, or start a private chat.
+
+The QR reveal is an animated presentation layer over a real ZXing QR matrix.
+The scanner uses the JourneyApps capture activity and accepts SCREAM version 1
+identity payloads only.
+
 ## Feed Posts
 
 Post creation:
@@ -28,7 +40,10 @@ Post creation:
 
 Post reactions:
 
-- `likePost` toggles local like state and clears dislike if needed.
+- `likePost` and `dislikePost` apply a sender-specific desired state backed by
+  the `post_reactions` uniqueness table. A second tap or long-press removes
+  the same local reaction. Duplicate or delayed mesh reaction packets are
+  idempotent instead of toggling counts again.
 - `dislikePost` toggles local dislike state and clears like if needed.
 - `resharePost` increments reshare count and prepends a copied reshare post.
 - `unresharePost` removes local reshare copies and decrements count.
@@ -136,4 +151,15 @@ The cleanup runs:
   - `OFFLINE` otherwise
 
 `HomeScreen` and `MeshInfoBottomSheet` render this state.
+
+## View counts and delivery labels
+
+Post views are recorded as one receipt per SCREAM user ID and post ID in the
+local database. A first view relays a `POST_VIEW` receipt; repeated rendering,
+scrolling, or reopening the post does not increment the count. A user’s own
+post is never counted as a view.
+
+Outgoing chat messages are labelled `Queued` while offline and `Relayed` when
+the device has an active mesh path. Neither label means a final recipient read
+receipt; the current protocol has no end-to-end delivery ACK yet.
 

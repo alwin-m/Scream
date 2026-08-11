@@ -154,6 +154,12 @@ Payload encryption:
 
 This is app-wide shared-key encryption, not real user-specific end-to-end encryption.
 
+Before dispatch, `AutoSecurityGuard` rejects Android envelopes that are
+plaintext, malformed, oversized, expired, unknown, or outside the allowed TTL.
+Repeated violations quarantine the route temporarily. BitChat interop remains a
+separate legacy protocol boundary and is not silently treated as SCREAM-native
+AES-GCM.
+
 Incoming code tries:
 
 1. Decrypt `encryptedData`.
@@ -169,6 +175,18 @@ Incoming messages:
 - If `id` has been seen, drop.
 - If `sourcePeerId` equals current user ID, drop.
 - Otherwise remember ID, dispatch, and forward if TTL allows.
+
+BLE scan placeholders are keyed by physical Bluetooth address. When a sender
+identity arrives over GATT, the address placeholder is merged into that user
+identity so the same device is not counted once per advertised service.
+
+The Android foreground service also exposes a compact heads-up contact alert
+for newly discovered BLE peers. It shows the peer's public emoji and alias,
+transport, and a qualitative signal band. Signal is deliberately presented as
+an estimate rather than a fake metre distance; RSSI is not reliable enough to
+claim physical distance. The in-app `MeshActivityIsland` uses the same compact
+status language and remains compatible with Android devices that have no
+Dynamic Island or live-notification surface.
 
 ## TTL And Forwarding
 
@@ -193,6 +211,7 @@ Handled in `dispatchIncomingMessage`:
 - `RESHARE_POST`
 - `UNRESHARE_POST`
 - `DELETE_POST`
+- `POST_VIEW` (first unique viewer receipt for a post)
 - `NEW_ROOM`
 - `DELETE_ROOM`
 - `CHAT_MESSAGE`
