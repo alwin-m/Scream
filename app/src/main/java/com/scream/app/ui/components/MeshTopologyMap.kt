@@ -18,6 +18,9 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,6 +75,7 @@ fun MeshTopologyMap(
     modifier: Modifier = Modifier,
     onPeerTap: (ConnectedPeer) -> Unit = {}
 ) {
+    val textMeasurer = rememberTextMeasurer()
     // ── Animation: pulsing ring on local user node ───────────────────────────
     val infiniteTransition = rememberInfiniteTransition(label = "mesh_anim")
 
@@ -168,15 +172,15 @@ fun MeshTopologyMap(
             }
         }
 
-        // ── Peer nodes ───────────────────────────────────────────────────────
+        // ── Peer nodes & labels ──────────────────────────────────────────────
         nodePlacements.forEach { node ->
             if (node.peer != null) {
-                drawPeerNode(node, glowAlpha)
+                drawPeerNode(node, glowAlpha, textMeasurer)
             }
         }
 
         // ── Local user node (drawn last = on top) ────────────────────────────
-        drawSelfNode(cx, cy, pulse, glowAlpha, NodeSelf)
+        drawSelfNode(cx, cy, pulse, glowAlpha, NodeSelf, nodePlacements.firstOrNull()?.label ?: "You", textMeasurer)
     }
 }
 
@@ -278,7 +282,9 @@ private fun DrawScope.drawSelfNode(
     cy: Float,
     pulse: Float,
     glowAlpha: Float,
-    color: Color
+    color: Color,
+    label: String,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer
 ) {
     val nodeR = 22f
     // Expanding pulse ring
@@ -301,9 +307,23 @@ private fun DrawScope.drawSelfNode(
     )
     // Inner dot
     drawCircle(color = Color.White.copy(alpha = 0.85f), radius = 5f, center = Offset(cx, cy))
+
+    // Text label below node
+    val measured = textMeasurer.measure(
+        text = label,
+        style = TextStyle(color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    )
+    drawText(
+        textLayoutResult = measured,
+        topLeft = Offset(cx - measured.size.width / 2f, cy + nodeR + 6f)
+    )
 }
 
-private fun DrawScope.drawPeerNode(node: NodePlacement, glowAlpha: Float) {
+private fun DrawScope.drawPeerNode(
+    node: NodePlacement,
+    glowAlpha: Float,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer
+) {
     val r = node.radiusPx
     val center = Offset(node.cx, node.cy)
 
@@ -323,6 +343,16 @@ private fun DrawScope.drawPeerNode(node: NodePlacement, glowAlpha: Float) {
     drawCircle(color = node.color.copy(alpha = 0.6f), radius = r, center = center, style = Stroke(1.5f))
     // Inner highlight
     drawCircle(color = Color.White.copy(alpha = 0.4f), radius = r * 0.3f, center = Offset(node.cx, node.cy - r * 0.3f))
+
+    // Text label below node
+    val measured = textMeasurer.measure(
+        text = node.label,
+        style = TextStyle(color = Color(0xFFCCE0FF), fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+    )
+    drawText(
+        textLayoutResult = measured,
+        topLeft = Offset(node.cx - measured.size.width / 2f, node.cy + r + 4f)
+    )
 }
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
