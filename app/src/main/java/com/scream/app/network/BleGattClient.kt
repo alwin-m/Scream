@@ -348,8 +348,8 @@ object BleGattClient {
         val address = device.address
         val generation = connectionGeneration
         val attempts = reconnectAttempts.getOrDefault(address, 0)
-        // Exponential back-off: 5s, 10s, 20s, capped at 60s
-        val delay = minOf(RECONNECT_DELAY_MS * (1L shl attempts), 60_000L)
+        // Exponential back-off: 5s, 10s, 20s, capped at 120s
+        val delay = minOf(RECONNECT_DELAY_MS * (1L shl minOf(attempts, 6)), 120_000L)
         reconnectAttempts[address] = attempts + 1
 
         Log.d(TAG, "Scheduling reconnect to $address in ${delay}ms (attempt #${attempts + 1})")
