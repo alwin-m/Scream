@@ -229,29 +229,44 @@ fun ProfileScreen(
                 )
 
                 Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Surface(
                         color = ScreamBlue.copy(alpha = 0.12f),
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             "AES-256-GCM",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = ScreamBlue,
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    Spacer(Modifier.width(8.dp))
                     Surface(
                         color = Color(0xFF00C896).copy(alpha = 0.12f),
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             "E2E Ready",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFF00C896),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Surface(
+                        color = ScreamGreen.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        val fp = com.scream.app.security.BuildIntegrity.getFingerprint(context)
+                        Text(
+                            "✅ Official (${fp.contributorTag})",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ScreamGreen,
                             fontWeight = FontWeight.Medium
                         )
                     }

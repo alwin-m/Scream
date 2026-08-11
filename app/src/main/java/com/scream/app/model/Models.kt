@@ -96,7 +96,6 @@ data class Room(
     val members: List<String> = emptyList()
 )
 
-
 enum class PeerTransport(val displayName: String) {
     BLUETOOTH("Bluetooth"),
     BLE("Bluetooth Low Energy"),
@@ -143,7 +142,9 @@ data class ConnectedPeer(
     val osVersion: String = "Android",
     val protocol: ProtocolType = ProtocolType.SCREAM,
     val nostrPubkey: String? = null,
-    val encryptionStatus: EncryptionStatus = EncryptionStatus.NONE
+    val encryptionStatus: EncryptionStatus = EncryptionStatus.NONE,
+    val appFingerprint: String? = null,
+    val contributorTag: String? = null
 )
 
 enum class NetworkStatus {
@@ -190,3 +191,31 @@ data class MeshStats(
     val networkStatus: NetworkStatus = NetworkStatus.OFFLINE,
     val connectionQuality: ConnectionQuality = ConnectionQuality.DISCONNECTED
 )
+
+/**
+ * Build integrity fingerprint used to verify official vs. modified app versions.
+ * The [signingHash] is the SHA-256 of the APK signing certificate.
+ */
+data class BuildFingerprint(
+    val versionName: String,
+    val versionCode: Int,
+    val signingHash: String,
+    val contributorTag: String,
+    val buildTimestamp: Long = System.currentTimeMillis()
+) {
+    /** Compact hex string transmitted over the mesh. */
+    fun toCompactString(): String = "$signingHash:$versionName:$versionCode:$contributorTag"
+}
+
+/**
+ * Trust level of a peer's app build, determined by comparing their
+ * [BuildFingerprint.signingHash] against the known official hash.
+ */
+enum class VersionTrust(val label: String, val badge: String) {
+    /** Peer is running an official build signed with the known key. */
+    OFFICIAL("Official", "✅"),
+    /** Peer did not send a fingerprint — older version or unknown. */
+    UNVERIFIED("Unverified", "❓"),
+    /** Peer's signing hash does not match the official key. */
+    MODIFIED("Modified", "⚠️")
+}

@@ -77,8 +77,14 @@ object P2pMeshEngine {
         var signalStrength: Int = -60,
         var batteryLevel: Int = 85,
         var osVersion: String = "Android",
-        var protocol: ProtocolType = ProtocolType.SCREAM
+        var protocol: ProtocolType = ProtocolType.SCREAM,
+        var appFingerprint: String? = null,
+        var contributorTag: String? = null
     )
+
+    /** Cached local build fingerprint string; set once from Application context. */
+    @Volatile var localFingerprint: String? = null
+    @Volatile var localContributorTag: String? = null
 
     fun start(user: User) {
         if (isRunning) return
@@ -139,6 +145,8 @@ object P2pMeshEngine {
                 put("avatar", user.avatar)
                 put("batteryLevel", ScreamRepository.getBatteryLevel())
                 put("osVersion", ScreamRepository.getOSVersion())
+                localFingerprint?.let { put("appFingerprint", it) }
+                localContributorTag?.let { put("contributorTag", it) }
             })
             put("route", org.json.JSONArray().apply { put(user.alias) })
             put("encryptedData", encryptPayload(payload))
@@ -371,13 +379,17 @@ object P2pMeshEngine {
                                     val existingPeer = peerMap[peerUser.id]
                                     val battery = userObj.optInt("batteryLevel", 85)
                                     val os = userObj.optString("osVersion", "Android")
+                                    val peerFp = userObj.optString("appFingerprint", "").takeIf { it.isNotBlank() }
+                                    val peerCtag = userObj.optString("contributorTag", "").takeIf { it.isNotBlank() }
 
                                     if (existingPeer != null) {
                                         peerMap[peerUser.id] = existingPeer.copy(
                                             lastSeen = now,
                                             signalStrength = estimateSignalStrength(senderIp),
                                             batteryLevel = battery,
-                                            osVersion = os
+                                            osVersion = os,
+                                            appFingerprint = peerFp ?: existingPeer.appFingerprint,
+                                            contributorTag = peerCtag ?: existingPeer.contributorTag
                                         )
                                     } else {
                                         val rssi = estimateSignalStrength(senderIp)
@@ -390,7 +402,9 @@ object P2pMeshEngine {
                                             connectionType = PeerConnectionType.DIRECT,
                                             signalStrength = rssi,
                                             batteryLevel = battery,
-                                            osVersion = os
+                                            osVersion = os,
+                                            appFingerprint = peerFp,
+                                            contributorTag = peerCtag
                                         )
                                     }
                                     updateRepositoryPeers()
@@ -423,6 +437,8 @@ object P2pMeshEngine {
                         put("avatar", currentUser?.avatar ?: "😎")
                         put("batteryLevel", ScreamRepository.getBatteryLevel())
                         put("osVersion", ScreamRepository.getOSVersion())
+                        localFingerprint?.let { put("appFingerprint", it) }
+                        localContributorTag?.let { put("contributorTag", it) }
                     }
 
                     val heartbeatJson = JSONObject().apply {
@@ -547,6 +563,8 @@ object P2pMeshEngine {
 
                 val senderBattery = senderJson?.optInt("batteryLevel", 85) ?: 85
                 val senderOs = senderJson?.optString("osVersion", "Android") ?: "Android"
+                val senderFp = senderJson?.optString("appFingerprint", "")?.takeIf { it.isNotBlank() }
+                val senderCtag = senderJson?.optString("contributorTag", "")?.takeIf { it.isNotBlank() }
 
                 if (senderUser != null && senderUser.id != currentUser?.id) {
                     val now = System.currentTimeMillis()
@@ -557,7 +575,9 @@ object P2pMeshEngine {
                             ipAddress = senderIp,
                             signalStrength = estimateSignalStrength(senderIp),
                             batteryLevel = senderBattery,
-                            osVersion = senderOs
+                            osVersion = senderOs,
+                            appFingerprint = senderFp ?: existing.appFingerprint,
+                            contributorTag = senderCtag ?: existing.contributorTag
                         )
                     } else {
                         val rssi = estimateSignalStrength(senderIp)
@@ -570,7 +590,9 @@ object P2pMeshEngine {
                             connectionType = PeerConnectionType.DIRECT,
                             signalStrength = rssi,
                             batteryLevel = senderBattery,
-                            osVersion = senderOs
+                            osVersion = senderOs,
+                            appFingerprint = senderFp,
+                            contributorTag = senderCtag
                         )
                     }
                     updateRepositoryPeers()
@@ -662,7 +684,9 @@ object P2pMeshEngine {
                 osVersion = peer.osVersion,
                 protocol = peer.protocol,
                 encryptionStatus = if (peer.protocol == ProtocolType.SCREAM)
-                    EncryptionStatus.SCREAM_SHARED_KEY else EncryptionStatus.NONE
+                    EncryptionStatus.SCREAM_SHARED_KEY else EncryptionStatus.NONE,
+                appFingerprint = peer.appFingerprint,
+                contributorTag = peer.contributorTag
             )
         }
         ScreamRepository.updateActivePeers(connectedPeers)

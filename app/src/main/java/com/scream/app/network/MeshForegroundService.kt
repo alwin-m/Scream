@@ -25,6 +25,7 @@ import com.scream.app.identity.dataStore
 import com.scream.app.model.BackgroundMode
 import com.scream.app.model.NetworkStatus
 import com.scream.app.model.User
+import com.scream.app.security.BuildIntegrity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -218,6 +219,12 @@ class MeshForegroundService : Service() {
                             BleGattServer.start(applicationContext)
 
                             if (user != null) {
+                                // Initialize build fingerprint for version integrity checking
+                                val fp = BuildIntegrity.getFingerprint(applicationContext)
+                                P2pMeshEngine.localFingerprint = fp.toCompactString()
+                                P2pMeshEngine.localContributorTag = fp.contributorTag
+                                BuildIntegrity.logSigningHash(applicationContext)
+
                                 P2pMeshEngine.start(user)
                                 Log.d(TAG, "Full mesh started for user: ${user.alias}")
                             } else {

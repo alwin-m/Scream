@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +48,8 @@ import com.scream.app.model.ProtocolType
 import com.scream.app.model.User
 import com.scream.app.ui.components.AvatarView
 import com.scream.app.ui.theme.*
+import com.scream.app.model.VersionTrust
+import com.scream.app.security.BuildIntegrity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -514,6 +517,7 @@ fun ExpandedPeerListItem(
     peer: ConnectedPeer,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val qualityColor = when (peer.quality) {
         ConnectionQuality.EXCELLENT -> SuccessGreen
         ConnectionQuality.GOOD -> ScreamBlue
@@ -581,6 +585,29 @@ fun ExpandedPeerListItem(
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = ScreamBlue,
+                                fontSize = 8.sp,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+                    // Version trust badge
+                    run {
+                        val trust = BuildIntegrity.verifyPeerFingerprint(peer.appFingerprint, context)
+                        val trustColor = when (trust) {
+                            VersionTrust.OFFICIAL -> SuccessGreen
+                            VersionTrust.UNVERIFIED -> WarningAmber
+                            VersionTrust.MODIFIED -> ErrorRed
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Surface(
+                            color = trustColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = "${trust.badge} ${trust.label.uppercase()}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = trustColor,
                                 fontSize = 8.sp,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                             )
