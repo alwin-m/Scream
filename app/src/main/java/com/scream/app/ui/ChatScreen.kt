@@ -349,7 +349,7 @@ fun ChatScreen(
                 tonalElevation = 0.dp,
                 color = ScreamSurface
             ) {
-                Column(modifier = Modifier.navigationBarsPadding()) {
+                Column(modifier = Modifier.navigationBarsPadding().imePadding()) {
                     Divider(color = ScreamDivider)
 
                     // Reply preview bar

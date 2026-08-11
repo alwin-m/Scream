@@ -161,7 +161,9 @@ fun HomeScreen(
             NavigationBar(
                 containerColor = ScreamSurface,
                 tonalElevation = 0.dp,
-                modifier = Modifier.height(72.dp)
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .height(64.dp)
             ) {
                 HomeTab.values().forEach { tab ->
                     val selected = selectedTab == tab
