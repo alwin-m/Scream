@@ -137,7 +137,7 @@ object ScreamRepository {
             mediaBase64 = mediaBase64,
             mediaMimeType = mediaMimeType,
             audioDurationMs = audioDurationMs,
-            views = 1
+            views = 0
         )
         _posts.value = listOf(newPost) + _posts.value
         persistLocalData()
@@ -169,23 +169,16 @@ object ScreamRepository {
             mediaBase64 = mediaBase64,
             mediaMimeType = mediaMimeType,
             audioDurationMs = audioDurationMs,
-            views = 1
+            views = 0
         )
         _posts.value = listOf(newPost) + _posts.value
         persistLocalData()
     }
 
-    fun incrementPostViews(postId: String) {
-        _posts.value = _posts.value.map { post ->
-            if (post.id == postId) {
-                post.copy(views = post.views + 1)
-            } else post
-        }
-        persistLocalData()
-    }
-
-    fun registerPostView(userId: String, postId: String) {
+    /** Records one view per logical SCREAM identity and relays only new receipts. */
+    fun registerPostView(userId: String, postId: String, shouldBroadcast: Boolean = true) {
         if (userId.isBlank() || postId.isBlank()) return
+        if (_posts.value.firstOrNull { it.id == postId }?.user?.id == userId) return
         val dbHelper = dbHelper ?: return
         try {
             val db = dbHelper.writableDatabase
@@ -208,63 +201,66 @@ object ScreamRepository {
                     } else post
                 }
                 persistLocalData()
+                if (shouldBroadcast) {
+                    P2pMeshEngine.broadcastPayload("POST_VIEW", JSONObject().apply { put("postId", postId) })
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e("ScreamRepository", "Error recording unique post view: ${e.message}")
         }
     }
 
-    fun likePost(postId: String, userAlias: String = currentUserAlias, shouldBroadcast: Boolean = true) {
-        _posts.value = _posts.value.map { post ->
-            if (post.id == postId) {
-                val alreadyLiked = post.isLiked || post.likedBy.contains(userAlias)
-                val newIsLiked = !alreadyLiked
-                val newLikedBy = if (alreadyLiked) post.likedBy - userAlias else post.likedBy + userAlias
-                val newLikesCount = if (alreadyLiked) (post.likes - 1).coerceAtLeast(0) else post.likes + 1
-                
-                post.copy(
-                    likes = newLikesCount,
-                    likedBy = newLikedBy,
-                    isLiked = newIsLiked,
-                    // Like and Dislike are mutually exclusive
-                    isDisliked = if (newIsLiked) false else post.isDisliked,
-                    dislikes = if (newIsLiked && post.isDisliked) (post.dislikes - 1).coerceAtLeast(0) else post.dislikes
-                )
-            } else post
-        }
-        persistLocalData()
-
-        if (shouldBroadcast) {
-            val payload = JSONObject().apply {
-                put("postId", postId)
-                put("userAlias", userAlias)
-            }
-            P2pMeshEngine.broadcastPayload("LIKE_POST", payload)
-        }
+    fun likePost(postId: String, shouldBroadcast: Boolean = true) {
+        val post = _posts.value.firstOrNull { it.id == postId } ?: return
+        if (post.isLiked) dbHelper?.setPostReaction(currentUserId, postId, "LIKE")
+        val next = if (post.isLiked) null else "LIKE"
+        applyPostReaction(postId, currentUserId, currentUserAlias, next, shouldBroadcast)
     }
 
     fun dislikePost(postId: String, shouldBroadcast: Boolean = true) {
+        val post = _posts.value.firstOrNull { it.id == postId } ?: return
+        if (post.isDisliked) dbHelper?.setPostReaction(currentUserId, postId, "DISLIKE")
+        val next = if (post.isDisliked) null else "DISLIKE"
+        applyPostReaction(postId, currentUserId, currentUserAlias, next, shouldBroadcast)
+    }
+
+    /** Applies a sender-specific desired reaction state. Duplicate receipts are no-ops. */
+    fun applyPostReaction(
+        postId: String,
+        actorId: String,
+        actorAlias: String,
+        reaction: String?,
+        shouldBroadcast: Boolean = true
+    ) {
+        if (postId.isBlank() || actorId.isBlank()) return
+        val change = dbHelper?.setPostReaction(actorId, postId, reaction) ?: return
+        if (change.previous == change.current) return
+
         _posts.value = _posts.value.map { post ->
-            if (post.id == postId) {
-                val alreadyDisliked = post.isDisliked
-                val newIsDisliked = !alreadyDisliked
-                val newDislikesCount = if (alreadyDisliked) (post.dislikes - 1).coerceAtLeast(0) else post.dislikes + 1
-                
-                post.copy(
-                    dislikes = newDislikesCount,
-                    isDisliked = newIsDisliked,
-                    // Like and Dislike are mutually exclusive
-                    isLiked = if (newIsDisliked) false else post.isLiked,
-                    likes = if (newIsDisliked && post.isLiked) (post.likes - 1).coerceAtLeast(0) else post.likes,
-                    likedBy = if (newIsDisliked) post.likedBy - currentUserAlias else post.likedBy
-                )
-            } else post
+            if (post.id != postId) return@map post
+            val likesAfterRemoval = if (change.previous == "LIKE") (post.likes - 1).coerceAtLeast(0) else post.likes
+            val dislikesAfterRemoval = if (change.previous == "DISLIKE") (post.dislikes - 1).coerceAtLeast(0) else post.dislikes
+            val updatedLikedBy = when {
+                change.previous == "LIKE" -> post.likedBy - actorAlias
+                else -> post.likedBy
+            }
+            post.copy(
+                likes = if (reaction == "LIKE") likesAfterRemoval + 1 else likesAfterRemoval,
+                dislikes = if (reaction == "DISLIKE") dislikesAfterRemoval + 1 else dislikesAfterRemoval,
+                likedBy = if (reaction == "LIKE") (updatedLikedBy + actorAlias).distinct() else updatedLikedBy,
+                isLiked = if (actorId == currentUserId) reaction == "LIKE" else post.isLiked,
+                isDisliked = if (actorId == currentUserId) reaction == "DISLIKE" else post.isDisliked
+            )
         }
         persistLocalData()
 
         if (shouldBroadcast) {
-            val payload = JSONObject().apply { put("postId", postId) }
-            P2pMeshEngine.broadcastPayload("DISLIKE_POST", payload)
+            val type = if (reaction == "DISLIKE") "DISLIKE_POST" else "LIKE_POST"
+            P2pMeshEngine.broadcastPayload(type, JSONObject().apply {
+                put("postId", postId)
+                put("reaction", reaction ?: "")
+                put("actorAlias", actorAlias)
+            })
         }
     }
 
@@ -476,11 +472,11 @@ object ScreamRepository {
             replyToSender = replyToSender,
             replyToBody = replyToBody,
             route = listOf(sender.alias),
-            deliveryStatus = "Sending"
+            deliveryStatus = outgoingDeliveryStatus()
         )
         _rooms.value = _rooms.value.map { room ->
             if (room.id == roomId) {
-                val updatedMessages = room.messages + newMsg.copy(deliveryStatus = "Delivered")
+                val updatedMessages = room.messages + newMsg
                 room.copy(
                     preview = "${sender.alias}: $text",
                     messages = updatedMessages
@@ -527,11 +523,11 @@ object ScreamRepository {
             replyToSender = replyToSender,
             replyToBody = replyToBody,
             route = listOf(sender.alias),
-            deliveryStatus = "Sending"
+            deliveryStatus = outgoingDeliveryStatus()
         )
         _rooms.value = _rooms.value.map { room ->
             if (room.id == roomId) {
-                val updatedMessages = room.messages + newMsg.copy(deliveryStatus = "Delivered")
+                val updatedMessages = room.messages + newMsg
                 room.copy(
                     preview = "${sender.alias}: Voice message",
                     messages = updatedMessages
@@ -581,11 +577,11 @@ object ScreamRepository {
             replyToSender = replyToSender,
             replyToBody = replyToBody,
             route = listOf(sender.alias),
-            deliveryStatus = "Sending"
+            deliveryStatus = outgoingDeliveryStatus()
         )
         _rooms.value = _rooms.value.map { room ->
             if (room.id == roomId) {
-                val updatedMessages = room.messages + newMsg.copy(deliveryStatus = "Delivered")
+                val updatedMessages = room.messages + newMsg
                 room.copy(
                     preview = "${sender.alias}: Photo",
                     messages = updatedMessages
@@ -616,6 +612,12 @@ object ScreamRepository {
         if (room?.isPrivate == true) {
             sender.profileImage?.let { payload.put("profileImage", it) }
         }
+    }
+
+    /** A mesh send has no recipient ACK yet, so it must never be labelled Delivered. */
+    private fun outgoingDeliveryStatus(): String = when (_networkStatus.value) {
+        NetworkStatus.OFFLINE -> "Queued"
+        else -> "Relayed"
     }
 
     fun receiveRemoteChatMessage(

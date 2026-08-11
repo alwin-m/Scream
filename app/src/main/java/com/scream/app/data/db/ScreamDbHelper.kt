@@ -14,6 +14,8 @@ import org.json.JSONObject
 
 class ScreamDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
 
+    data class PostReactionChange(val previous: String?, val current: String?)
+
     companion object {
         private const val DB_NAME = "scream_mesh_db.db"
         private const val DB_VERSION = 3
@@ -273,6 +275,40 @@ class ScreamDbHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null
 
     fun deletePost(postId: String) {
         writableDatabase.delete(TABLE_POSTS, "id = ?", arrayOf(postId))
+    }
+
+    /** Stores the desired reaction state so duplicate mesh envelopes are idempotent. */
+    fun setPostReaction(userId: String, postId: String, reactionType: String?): PostReactionChange {
+        val db = writableDatabase
+        var previous: String? = null
+        db.beginTransaction()
+        try {
+            db.query(
+                TABLE_POST_REACTIONS,
+                arrayOf("reaction_type"),
+                "user_id = ? AND post_id = ?",
+                arrayOf(userId, postId), null, null, null
+            ).use { cursor ->
+                if (cursor.moveToFirst()) previous = cursor.getString(0)
+            }
+            if (previous != reactionType) {
+                if (reactionType == null) {
+                    db.delete(TABLE_POST_REACTIONS, "user_id = ? AND post_id = ?", arrayOf(userId, postId))
+                } else {
+                    val values = ContentValues().apply {
+                        put("user_id", userId)
+                        put("post_id", postId)
+                        put("reaction_type", reactionType)
+                        put("created_at", System.currentTimeMillis())
+                    }
+                    db.insertWithOnConflict(TABLE_POST_REACTIONS, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return PostReactionChange(previous, reactionType)
     }
 
     // ── Messages DB Operations ───────────────────────────────────────────────
