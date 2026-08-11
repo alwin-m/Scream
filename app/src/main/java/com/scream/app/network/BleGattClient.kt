@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * BLE GATT Client for the SCREAM mesh.
@@ -41,19 +42,20 @@ object BleGattClient {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // address -> active GATT connection
-    private val activeGatts = mutableMapOf<String, BluetoothGatt>()
+    private val activeGatts = ConcurrentHashMap<String, BluetoothGatt>()
     // address -> write characteristic (ready to send)
-    private val writeChars = mutableMapOf<String, BluetoothGattCharacteristic>()
+    private val writeChars = ConcurrentHashMap<String, BluetoothGattCharacteristic>()
     // address -> outgoing message queue (held until services are discovered)
-    private val pendingQueues = mutableMapOf<String, ArrayDeque<String>>()
+    private val pendingQueues = ConcurrentHashMap<String, ArrayDeque<String>>()
     // shortId -> (index -> base64 chunk)
-    private val chunkBuffer = mutableMapOf<String, MutableMap<Int, String>>()
+    private val chunkBuffer = ConcurrentHashMap<String, MutableMap<Int, String>>()
     // shortId -> totalChunks
-    private val chunkTotals = mutableMapOf<String, Int>()
+    private val chunkTotals = ConcurrentHashMap<String, Int>()
     // devices we are trying to connect to (prevent duplicate attempts)
-    private val pendingConnections = mutableSetOf<String>()
+    private val pendingConnections = ConcurrentHashMap.newKeySet<String>()
     // per-device reconnect attempt counter for back-off
-    private val reconnectAttempts = mutableMapOf<String, Int>()
+    private val reconnectAttempts = ConcurrentHashMap<String, Int>()
+    @Volatile private var connectionGeneration = 0L
 
     // ──────────────────────────────────────────────────────────────────────────
     // Public API
@@ -109,6 +111,7 @@ object BleGattClient {
     /** Disconnect all open GATT connections and clean up state. */
     @SuppressLint("MissingPermission")
     fun disconnectAll() {
+        connectionGeneration++
         activeGatts.values.toList().forEach { gatt ->
             try { gatt.disconnect(); gatt.close() } catch (e: Exception) { }
         }
@@ -343,6 +346,7 @@ object BleGattClient {
 
     private fun scheduleReconnect(context: Context, device: BluetoothDevice) {
         val address = device.address
+        val generation = connectionGeneration
         val attempts = reconnectAttempts.getOrDefault(address, 0)
         // Exponential back-off: 5s, 10s, 20s, capped at 60s
         val delay = minOf(RECONNECT_DELAY_MS * (1L shl attempts), 60_000L)
@@ -351,7 +355,7 @@ object BleGattClient {
         Log.d(TAG, "Scheduling reconnect to $address in ${delay}ms (attempt #${attempts + 1})")
         scope.launch {
             delay(delay)
-            if (!activeGatts.containsKey(address)) {
+            if (generation == connectionGeneration && !activeGatts.containsKey(address)) {
                 connectToDevice(context, device)
             }
         }

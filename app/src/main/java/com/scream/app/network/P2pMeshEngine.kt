@@ -23,11 +23,14 @@ import org.json.JSONObject
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -54,8 +57,10 @@ object P2pMeshEngine {
     val screamAdapter = ScreamProtocolAdapter()
     // BitChatProtocolAdapter is already an object singleton
 
-    private val peerMap = mutableMapOf<String, PeerInfo>()
-    private val discoveredButNotConnected = mutableMapOf<String, PeerInfo>()
+    private val peerMap = ConcurrentHashMap<String, PeerInfo>()
+    private val discoveredButNotConnected = ConcurrentHashMap<String, PeerInfo>()
+    @Volatile private var udpSocket: DatagramSocket? = null
+    @Volatile private var tcpServerSocket: ServerSocket? = null
     private val seenMessageIds = object : LinkedHashMap<String, Long>(MAX_MESSAGE_CACHE_SIZE, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean {
             return size > MAX_MESSAGE_CACHE_SIZE
@@ -78,6 +83,8 @@ object P2pMeshEngine {
     fun start(user: User) {
         if (isRunning) return
         this.currentUser = user
+        peerMap.clear()
+        discoveredButNotConnected.clear()
         isRunning = true
         scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -104,9 +111,16 @@ object P2pMeshEngine {
 
     fun stop() {
         isRunning = false
+        udpSocket?.close()
+        udpSocket = null
+        tcpServerSocket?.close()
+        tcpServerSocket = null
         screamAdapter.shutdown()
         BitChatProtocolAdapter.shutdown()
         scope.cancel()
+        peerMap.clear()
+        discoveredButNotConnected.clear()
+        ScreamRepository.updateActivePeers(emptyList())
     }
 
     fun broadcastPayload(type: String, payload: JSONObject) {
@@ -191,7 +205,8 @@ object P2pMeshEngine {
                 User(
                     id = senderJson.optString("id"),
                     alias = senderJson.optString("alias"),
-                    avatar = senderJson.optString("avatar", "😎")
+                    avatar = senderJson.optString("avatar", "😎"),
+                    profileImage = null
                 )
             } else null
 
@@ -249,11 +264,14 @@ object P2pMeshEngine {
                 // Only use TCP for LAN peers (not BLE-only peers with ble:// addresses)
                 if (peer.ipAddress.startsWith("ble://")) return@forEach
                 try {
-                    val socket = Socket(peer.ipAddress, TCP_PORT)
-                    socket.soTimeout = 5000
-                    socket.getOutputStream().write(jsonStr.toByteArray(Charsets.UTF_8))
-                    socket.getOutputStream().flush()
-                    socket.close()
+                    Socket().use { socket ->
+                        socket.connect(InetSocketAddress(peer.ipAddress, TCP_PORT), 1500)
+                        socket.soTimeout = 5000
+                        socket.getOutputStream().use { output ->
+                            output.write(jsonStr.toByteArray(Charsets.UTF_8))
+                            output.flush()
+                        }
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to send payload to ${peer.ipAddress}: ${e.message}")
                 }
@@ -292,7 +310,11 @@ object P2pMeshEngine {
         withContext(Dispatchers.IO) {
             while (isRunning) {
                 try {
-                    val socket = DatagramSocket(UDP_PORT)
+                    val socket = DatagramSocket(null).apply {
+                        reuseAddress = true
+                        bind(InetSocketAddress(UDP_PORT))
+                    }
+                    udpSocket = socket
                     socket.broadcast = true
                     val buffer = ByteArray(2048)
 
@@ -340,7 +362,8 @@ object P2pMeshEngine {
                                 val peerUser = User(
                                     id = userObj.optString("id"),
                                     alias = userObj.optString("alias"),
-                                    avatar = userObj.optString("avatar", "😎")
+                                    avatar = userObj.optString("avatar", "😎"),
+                                    profileImage = null
                                 )
 
                                 if (peerUser.id != currentUser?.id) {
@@ -378,8 +401,9 @@ object P2pMeshEngine {
                         }
                     }
                     socket.close()
+                    if (udpSocket === socket) udpSocket = null
                 } catch (e: Exception) {
-                    Log.w(TAG, "UDP listener paused (Wi-Fi offline or socket error): ${e.message}")
+                    if (isRunning) Log.w(TAG, "UDP listener paused (Wi-Fi offline or socket error): ${e.message}")
                     delay(4000)
                 }
             }
@@ -408,13 +432,9 @@ object P2pMeshEngine {
                     }
 
                     val bytes = heartbeatJson.toString().toByteArray(Charsets.UTF_8)
-                    val packet = DatagramPacket(
-                        bytes,
-                        bytes.size,
-                        InetAddress.getByName("255.255.255.255"),
-                        UDP_PORT
-                    )
-                    socket.send(packet)
+                    broadcastAddresses().forEach { address ->
+                        socket.send(DatagramPacket(bytes, bytes.size, address, UDP_PORT))
+                    }
                     socket.close()
 
                     // Broadcast dual-protocol BitChat heartbeat for BitChat nodes
@@ -444,14 +464,19 @@ object P2pMeshEngine {
         withContext(Dispatchers.IO) {
             while (isRunning) {
                 try {
-                    val serverSocket = ServerSocket(TCP_PORT)
+                    val serverSocket = ServerSocket().apply {
+                        reuseAddress = true
+                        bind(InetSocketAddress(TCP_PORT))
+                    }
+                    tcpServerSocket = serverSocket
                     while (isRunning) {
                         val clientSocket = serverSocket.accept()
                         scope.launch { handleTcpClient(clientSocket) }
                     }
                     serverSocket.close()
+                    if (tcpServerSocket === serverSocket) tcpServerSocket = null
                 } catch (e: Exception) {
-                    Log.w(TAG, "TCP server listener paused (Wi-Fi offline or socket error): ${e.message}")
+                    if (isRunning) Log.w(TAG, "TCP server listener paused (Wi-Fi offline or socket error): ${e.message}")
                     delay(4000)
                 }
             }
@@ -515,7 +540,8 @@ object P2pMeshEngine {
                     User(
                         id = senderJson.optString("id"),
                         alias = senderJson.optString("alias"),
-                        avatar = senderJson.optString("avatar", "😎")
+                        avatar = senderJson.optString("avatar", "😎"),
+                        profileImage = null
                     )
                 } else null
 
@@ -589,7 +615,11 @@ object P2pMeshEngine {
             delay(8000)
             peerMap.keys.forEach { peerId ->
                 peerMap[peerId]?.let { peer ->
-                    val rssi = estimateSignalStrength(peer.ipAddress)
+                    val rssi = if (peer.transport == PeerTransport.BLE) {
+                        peer.signalStrength
+                    } else {
+                        estimateSignalStrength(peer.ipAddress)
+                    }
                     val newQuality = ConnectionQuality.fromRssi(rssi)
                     peerMap[peerId] = peer.copy(
                         quality = newQuality,
@@ -664,7 +694,7 @@ object P2pMeshEngine {
                 lastSeen = now,
                 transport = PeerTransport.BLE,
                 quality = ConnectionQuality.fromRssi(rssi),
-                connectionType = PeerConnectionType.DIRECT,
+                connectionType = PeerConnectionType.NEARBY_DISCOVERED,
                 signalStrength = rssi,
                 protocol = proto
             )
@@ -679,6 +709,18 @@ object P2pMeshEngine {
             ipAddress.startsWith("172.") -> -60
             else -> -70
         }
+    }
+
+    private fun broadcastAddresses(): List<InetAddress> {
+        val addresses = linkedSetOf<InetAddress>()
+        runCatching { addresses += InetAddress.getByName("255.255.255.255") }
+        runCatching {
+            NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { networkInterface ->
+                if (!networkInterface.isUp || networkInterface.isLoopback) return@forEach
+                networkInterface.interfaceAddresses.mapNotNull { it.broadcast }.forEach(addresses::add)
+            }
+        }
+        return addresses.toList()
     }
 
     private fun hasSeenMessage(messageId: String): Boolean = synchronized(seenMessageIds) {
@@ -843,6 +885,17 @@ object P2pMeshEngine {
                     val replyToId = data.optString("replyToId").takeIf { it.isNotBlank() }
                     val replyToSender = data.optString("replyToSender").takeIf { it.isNotBlank() }
                     val replyToBody = data.optString("replyToBody").takeIf { it.isNotBlank() }
+                    val roomIsPrivate = ScreamRepository.rooms.value
+                        .firstOrNull { it.id == roomId }
+                        ?.isPrivate == true
+                    val messageSender = if (roomIsPrivate) {
+                        senderUser.copy(
+                            profileImage = data.optString("profileImage")
+                                .takeIf { it.isNotBlank() }
+                        )
+                    } else {
+                        senderUser.copy(profileImage = null)
+                    }
                     val routeList = mutableListOf<String>()
                     val routeArray = json.optJSONArray("route")
                     if (routeArray != null) {
@@ -853,7 +906,7 @@ object P2pMeshEngine {
                     ScreamRepository.receiveRemoteChatMessage(
                         messageId = chatMessageId,
                         roomId = roomId,
-                        sender = senderUser,
+                        sender = messageSender,
                         text = body,
                         kind = kind,
                         audioBase64 = audioBase64,
