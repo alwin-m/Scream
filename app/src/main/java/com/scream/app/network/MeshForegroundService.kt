@@ -190,7 +190,16 @@ class MeshForegroundService : Service() {
                     val batteryPct = if (level >= 0 && scale > 0) (level * 100 / scale.toFloat()).toInt() else 100
                     val isCharging = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING
 
-                    val autoDeepSleepTriggered = profile.isAutoDeepSleepEnabled && !isCharging && batteryPct <= profile.autoDeepSleepThreshold
+                    // Check scheduled time window
+                    val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                    val isScheduledTime = if (profile.isScheduledDeepSleepEnabled) {
+                        val start = profile.deepSleepStartHour
+                        val end = profile.deepSleepEndHour
+                        if (start <= end) currentHour in start until end
+                        else currentHour >= start || currentHour < end
+                    } else false
+
+                    val autoDeepSleepTriggered = (profile.isAutoDeepSleepEnabled && !isCharging && batteryPct <= profile.autoDeepSleepThreshold) || isScheduledTime
 
                     val effectiveMode = when {
                         isPermanentOffline -> BackgroundMode.DISABLED
@@ -198,7 +207,7 @@ class MeshForegroundService : Service() {
                         else -> profile.backgroundMode
                     }
 
-                    Log.d(TAG, "Observed BackgroundMode change: $effectiveMode (Offline: $isPermanentOffline, AutoSleep: $autoDeepSleepTriggered)")
+                    Log.d(TAG, "Observed BackgroundMode change: $effectiveMode (Offline: $isPermanentOffline, LowBat/Schedule: $autoDeepSleepTriggered)")
 
                     when (effectiveMode) {
                         BackgroundMode.ACTIVE -> {

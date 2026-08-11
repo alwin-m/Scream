@@ -27,7 +27,12 @@ data class UserProfile(
     val batteryVisibility: BatteryVisibility = BatteryVisibility.FRIENDS,
     val isAutoDeepSleepEnabled: Boolean = true,
     val autoDeepSleepThreshold: Int = 20,
-    val isPermanentOffline: Boolean = false
+    val isPermanentOffline: Boolean = false,
+    val scanIntervalMs: Long = 4000L,
+    val isScheduledDeepSleepEnabled: Boolean = false,
+    val deepSleepStartHour: Int = 23,
+    val deepSleepEndHour: Int = 7,
+    val isStealthModeEnabled: Boolean = false
 )
 
 class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
@@ -37,14 +42,19 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val ALIAS_KEY = stringPreferencesKey("alias")
         val AGE_KEY = stringPreferencesKey("age")
         val GENDER_KEY = stringPreferencesKey("gender")
-    val EMOJI_AVATAR_KEY = stringPreferencesKey("emoji_avatar")
-    val PROFILE_IMAGE_KEY = stringPreferencesKey("profile_image")
+        val EMOJI_AVATAR_KEY = stringPreferencesKey("emoji_avatar")
+        val PROFILE_IMAGE_KEY = stringPreferencesKey("profile_image")
         val IS_REGISTERED_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("is_registered")
         val BACKGROUND_MODE_KEY = stringPreferencesKey("background_mode")
         val BATTERY_VISIBILITY_KEY = stringPreferencesKey("battery_visibility")
         val AUTO_DEEP_SLEEP_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("auto_deep_sleep_enabled")
         val AUTO_DEEP_SLEEP_THRESHOLD_KEY = androidx.datastore.preferences.core.intPreferencesKey("auto_deep_sleep_threshold")
         val PERMANENT_OFFLINE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("permanent_offline")
+        val SCAN_INTERVAL_KEY = androidx.datastore.preferences.core.longPreferencesKey("scan_interval_ms")
+        val SCHEDULED_DEEP_SLEEP_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("scheduled_deep_sleep_enabled")
+        val DEEP_SLEEP_START_HOUR_KEY = androidx.datastore.preferences.core.intPreferencesKey("deep_sleep_start_hour")
+        val DEEP_SLEEP_END_HOUR_KEY = androidx.datastore.preferences.core.intPreferencesKey("deep_sleep_end_hour")
+        val STEALTH_MODE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("stealth_mode_enabled")
     }
 
     val userProfileFlow: Flow<UserProfile> = dataStore.data.map { preferences ->
@@ -65,7 +75,12 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             batteryVisibility = battVis,
             isAutoDeepSleepEnabled = preferences[AUTO_DEEP_SLEEP_KEY] ?: true,
             autoDeepSleepThreshold = preferences[AUTO_DEEP_SLEEP_THRESHOLD_KEY] ?: 20,
-            isPermanentOffline = preferences[PERMANENT_OFFLINE_KEY] ?: false
+            isPermanentOffline = preferences[PERMANENT_OFFLINE_KEY] ?: false,
+            scanIntervalMs = preferences[SCAN_INTERVAL_KEY] ?: 4000L,
+            isScheduledDeepSleepEnabled = preferences[SCHEDULED_DEEP_SLEEP_KEY] ?: false,
+            deepSleepStartHour = preferences[DEEP_SLEEP_START_HOUR_KEY] ?: 23,
+            deepSleepEndHour = preferences[DEEP_SLEEP_END_HOUR_KEY] ?: 7,
+            isStealthModeEnabled = preferences[STEALTH_MODE_KEY] ?: false
         )
     }
 
@@ -117,5 +132,24 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PERMANENT_OFFLINE_KEY] = offline
         }
     }
-}
 
+    suspend fun setScanIntervalMs(intervalMs: Long) {
+        dataStore.edit { preferences ->
+            preferences[SCAN_INTERVAL_KEY] = intervalMs
+        }
+    }
+
+    suspend fun setScheduledDeepSleep(enabled: Boolean, startHour: Int = 23, endHour: Int = 7) {
+        dataStore.edit { preferences ->
+            preferences[SCHEDULED_DEEP_SLEEP_KEY] = enabled
+            preferences[DEEP_SLEEP_START_HOUR_KEY] = startHour
+            preferences[DEEP_SLEEP_END_HOUR_KEY] = endHour
+        }
+    }
+
+    suspend fun setStealthMode(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[STEALTH_MODE_KEY] = enabled
+        }
+    }
+}

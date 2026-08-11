@@ -452,19 +452,38 @@ fun ProfileScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "Background Activity",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = ScreamWhite
                     )
+                    if (currentBgMode == com.scream.app.model.BackgroundMode.DEEP_SLEEP) {
+                        Surface(
+                            color = WarningAmber.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = "💤 DEEP SLEEP ACTIVE",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = WarningAmber,
+                                fontSize = 9.sp,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Controls background networking & battery consumption.",
+                    text = "Controls background networking & battery consumption. Deep Sleep hides the app from network scans.",
                     style = MaterialTheme.typography.labelSmall,
                     color = ScreamTextTertiary
                 )
