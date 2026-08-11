@@ -49,10 +49,6 @@ fun SettingsScreen(
     val threshold = profile?.autoDeepSleepThreshold ?: 20
     val isOffline = profile?.isPermanentOffline ?: false
 
-    var showSearchingOverlay by remember { mutableStateOf(false) }
-    var showPreparingOverlay by remember { mutableStateOf(false) }
-    var showStepTracker by remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -238,7 +234,7 @@ fun SettingsScreen(
 
             // ── Section 4: Security & Encryption ────────────────────────────
             item {
-                SettingsSectionHeader(title = "Security & Encryption", icon = Icons.Default.Security)
+                SettingsSectionHeader(title = "Security & Build Integrity", icon = Icons.Default.Security)
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     color = ScreamSurfaceVariant,
@@ -249,73 +245,36 @@ fun SettingsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Security, contentDescription = null, tint = ScreamGreen, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text("AES-256-GCM & Ed25519 Ready", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ScreamWhite)
+                            Text("AES-256-GCM & Cryptographic Fingerprinting", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = ScreamWhite)
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "SCREAM uses local shared keys for P2P mesh and hardware-backed cryptographic identity for BitChat interop.",
+                            "SCREAM embeds SHA-256 APK signing fingerprints to detect modified builds or unauthorized forks across the mesh.",
                             style = MaterialTheme.typography.bodySmall,
                             color = ScreamTextSecondary
                         )
-                    }
-                }
-            }
-            // ── Section 5: UI/UX Demos ──────────────────────────────────────
-            item {
-                SettingsSectionHeader(title = "UI/UX Components Showcase", icon = Icons.Default.Person)
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    color = ScreamSurfaceVariant,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            "Preview the new custom components:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = ScreamTextSecondary
-                        )
-                        
-                        Button(
-                            onClick = { showSearchingOverlay = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        val fp = com.scream.app.security.BuildIntegrity.getFingerprint(context)
+                        Surface(
+                            color = ScreamSurfaceTop,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Searching Items Sheet")
-                        }
-                        
-                        Button(
-                            onClick = { showPreparingOverlay = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
-                        ) {
-                            Text("Preparing Overlay")
-                        }
-                        
-                        Button(
-                            onClick = { showStepTracker = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = ScreamBlue)
-                        ) {
-                            Text("Step Tracker (Recruiter)")
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text("Build Verification", style = MaterialTheme.typography.labelSmall, color = ScreamTextTertiary)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    "✅ Official Version ${fp.versionName} (${fp.contributorTag})",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ScreamGreen
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-    }
-
-    if (showSearchingOverlay) {
-        SearchingItemsBottomSheet(onDismiss = { showSearchingOverlay = false })
-    }
-
-    if (showPreparingOverlay) {
-        PreparingBottomSheet(onStop = { showPreparingOverlay = false })
-    }
-
-    if (showStepTracker) {
-        androidx.compose.ui.window.Dialog(onDismissRequest = { showStepTracker = false }) {
-            StepProgressTracker()
         }
     }
 }
