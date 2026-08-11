@@ -169,6 +169,63 @@ fun MeshInfoBottomSheet(
                 }
             }
 
+            // Nearby Share App / Files Sideload Export Card
+            item {
+                val context = LocalContext.current
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    color = ScreamSurfaceVariant,
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(ScreamGreen.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "Share Nearby",
+                                tint = ScreamGreen,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Share SCREAM App Nearby",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = ScreamWhite
+                            )
+                            Text(
+                                text = "Send APK via Bluetooth or Nearby Share to phones without SCREAM installed.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ScreamTextTertiary
+                            )
+                        }
+                        Button(
+                            onClick = { com.scream.app.utils.ShareUtils.shareScreamApk(context) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ScreamGreen,
+                                contentColor = ScreamBlack
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text("Share", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // Network Tree Graph Animation (Dynamic to actual peers)
             item {
                 Text(

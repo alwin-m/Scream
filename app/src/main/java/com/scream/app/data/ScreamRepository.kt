@@ -1111,6 +1111,47 @@ object ScreamRepository {
         return "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
     }
 
+    /**
+     * Retrieves exact device model name (e.g. "Samsung Galaxy A70", "Google Pixel 7a").
+     */
+    fun getFormattedDeviceName(): String {
+        val manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercase() }
+        val model = Build.MODEL
+        return if (model.startsWith(manufacturer, ignoreCase = true)) {
+            model.replaceFirstChar { it.uppercase() }
+        } else {
+            "$manufacturer $model"
+        }
+    }
+
+    /**
+     * GrapheneOS-style hardware security profile.
+     */
+    data class DeviceHardwareProfile(
+        val deviceName: String,
+        val manufacturer: String,
+        val model: String,
+        val androidVersion: String,
+        val sdkInt: Int,
+        val securityPatch: String
+    )
+
+    fun getDeviceHardwareProfile(): DeviceHardwareProfile {
+        val patch = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Build.VERSION.SECURITY_PATCH
+        } else {
+            "Standard"
+        }
+        return DeviceHardwareProfile(
+            deviceName = getFormattedDeviceName(),
+            manufacturer = Build.MANUFACTURER.replaceFirstChar { it.uppercase() },
+            model = Build.MODEL,
+            androidVersion = "Android ${Build.VERSION.RELEASE}",
+            sdkInt = Build.VERSION.SDK_INT,
+            securityPatch = patch
+        )
+    }
+
     fun showIncomingMessageNotification(senderName: String, messageText: String) {
         val ctx = appContext ?: return
         val notificationManager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

@@ -32,7 +32,8 @@ data class UserProfile(
     val isScheduledDeepSleepEnabled: Boolean = false,
     val deepSleepStartHour: Int = 23,
     val deepSleepEndHour: Int = 7,
-    val isStealthModeEnabled: Boolean = false
+    val isStealthModeEnabled: Boolean = false,
+    val photoVisibility: com.scream.app.model.PhotoVisibility = com.scream.app.model.PhotoVisibility.PRIVATE_CHATS_ONLY
 )
 
 class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
@@ -55,6 +56,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val DEEP_SLEEP_START_HOUR_KEY = androidx.datastore.preferences.core.intPreferencesKey("deep_sleep_start_hour")
         val DEEP_SLEEP_END_HOUR_KEY = androidx.datastore.preferences.core.intPreferencesKey("deep_sleep_end_hour")
         val STEALTH_MODE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("stealth_mode_enabled")
+        val PHOTO_VISIBILITY_KEY = stringPreferencesKey("photo_visibility")
     }
 
     val userProfileFlow: Flow<UserProfile> = dataStore.data.map { preferences ->
@@ -62,6 +64,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val bgMode = runCatching { BackgroundMode.valueOf(modeStr) }.getOrDefault(BackgroundMode.ACTIVE)
         val battVisStr = preferences[BATTERY_VISIBILITY_KEY] ?: BatteryVisibility.FRIENDS.name
         val battVis = runCatching { BatteryVisibility.valueOf(battVisStr) }.getOrDefault(BatteryVisibility.FRIENDS)
+        val photoVisStr = preferences[PHOTO_VISIBILITY_KEY] ?: com.scream.app.model.PhotoVisibility.PRIVATE_CHATS_ONLY.name
+        val photoVis = runCatching { com.scream.app.model.PhotoVisibility.valueOf(photoVisStr) }.getOrDefault(com.scream.app.model.PhotoVisibility.PRIVATE_CHATS_ONLY)
 
         UserProfile(
             uuid = preferences[UUID_KEY] ?: "",
@@ -80,7 +84,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             isScheduledDeepSleepEnabled = preferences[SCHEDULED_DEEP_SLEEP_KEY] ?: false,
             deepSleepStartHour = preferences[DEEP_SLEEP_START_HOUR_KEY] ?: 23,
             deepSleepEndHour = preferences[DEEP_SLEEP_END_HOUR_KEY] ?: 7,
-            isStealthModeEnabled = preferences[STEALTH_MODE_KEY] ?: false
+            isStealthModeEnabled = preferences[STEALTH_MODE_KEY] ?: false,
+            photoVisibility = photoVis
         )
     }
 
@@ -150,6 +155,12 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setStealthMode(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[STEALTH_MODE_KEY] = enabled
+        }
+    }
+
+    suspend fun setPhotoVisibility(visibility: com.scream.app.model.PhotoVisibility) {
+        dataStore.edit { preferences ->
+            preferences[PHOTO_VISIBILITY_KEY] = visibility.name
         }
     }
 }

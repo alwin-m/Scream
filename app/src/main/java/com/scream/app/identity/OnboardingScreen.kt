@@ -32,6 +32,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.scream.app.ui.theme.*
 import kotlinx.coroutines.delay
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
+import java.io.ByteArrayOutputStream
+import com.scream.app.ui.components.AvatarView
+
 private val emojiOptions = listOf(
     "😎", "🔥", "👻", "🤖", "🎭", "🦊",
     "🐺", "🌙", "⚡", "💀", "🎯", "🚀",
@@ -45,11 +54,38 @@ fun OnboardingScreen(
     viewModel: IdentityViewModel = viewModel(),
     onRegistrationComplete: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var alias by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var gender by remember { mutableStateOf("") }
     var selectedEmoji by remember { mutableStateOf("😎") }
+    var profileImageBase64 by remember { mutableStateOf<String?>(null) }
     var showContent by remember { mutableStateOf(false) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+            val bytes = baos.toByteArray()
+            profileImageBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+                if (bitmap != null) {
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                    val bytes = baos.toByteArray()
+                    profileImageBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                }
+            } catch (_: Exception) {}
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(150)
@@ -115,7 +151,7 @@ fun OnboardingScreen(
                 enter = fadeIn(tween(600, delayMillis = 200))
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Large selected emoji
+                    // Large selected avatar (Photo or Emoji)
                     Box(
                         modifier = Modifier
                             .size(88.dp)
@@ -135,14 +171,39 @@ fun OnboardingScreen(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = selectedEmoji, fontSize = 44.sp)
+                        AvatarView(
+                            avatarStr = selectedEmoji,
+                            profileImage = profileImageBase64,
+                            size = 88.dp,
+                            fontSize = 44.sp
+                        )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = { cameraLauncher.launch() },
+                            colors = ButtonDefaults.textButtonColors(contentColor = ScreamBlue)
+                        ) {
+                            Text("📷 Take Photo", style = MaterialTheme.typography.labelMedium)
+                        }
+                        TextButton(
+                            onClick = { galleryLauncher.launch("image/*") },
+                            colors = ButtonDefaults.textButtonColors(contentColor = ScreamViolet)
+                        ) {
+                            Text("🖼️ Choose Photo", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Choose your avatar",
-                        style = MaterialTheme.typography.labelMedium,
+                        text = "Or choose an avatar emoji below (Optional)",
+                        style = MaterialTheme.typography.labelSmall,
                         color = ScreamTextTertiary
                     )
 
@@ -298,7 +359,8 @@ fun OnboardingScreen(
                                 alias = alias.ifBlank { "Anonymous" },
                                 age = age,
                                 gender = gender,
-                                emojiAvatar = selectedEmoji.ifBlank { "😎" }
+                                emojiAvatar = selectedEmoji.ifBlank { "😎" },
+                                profileImage = profileImageBase64
                             )
                             onRegistrationComplete()
                         },

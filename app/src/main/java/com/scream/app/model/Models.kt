@@ -182,6 +182,15 @@ enum class BatteryVisibility(val title: String) {
     NOBODY("Nobody")
 }
 
+/**
+ * Profile photo visibility scope preference.
+ */
+enum class PhotoVisibility(val title: String, val description: String) {
+    EVERYONE("Everyone", "All mesh network peers can view your profile photo."),
+    PRIVATE_CHATS_ONLY("Private Chats Only", "Only users you have active private conversations with can view your photo."),
+    NOBODY("Nobody", "Keep your photo completely private; peers only see your emoji avatar.")
+}
+
 data class MeshStats(
     val meshId: String = "SCREAM-0000",
     val totalParticipants: Int = 1,

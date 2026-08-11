@@ -227,6 +227,15 @@ fun ProfileScreen(
                     value = currentUser?.id ?: "#0000",
                     context = context
                 )
+                Spacer(Modifier.height(8.dp))
+
+                // Hardware Device Model (GrapheneOS style)
+                val deviceProfile = ScreamRepository.getDeviceHardwareProfile()
+                IdentityRow(
+                    label = "Hardware Model",
+                    value = "${deviceProfile.deviceName} (${deviceProfile.androidVersion})",
+                    context = context
+                )
 
                 Spacer(Modifier.height(10.dp))
                 Row(

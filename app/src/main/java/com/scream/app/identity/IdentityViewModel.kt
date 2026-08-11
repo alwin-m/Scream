@@ -19,15 +19,15 @@ class IdentityViewModel(application: Application) : AndroidViewModel(application
             initialValue = null
         )
 
-    fun register(alias: String, age: String, gender: String, emojiAvatar: String) {
+    fun register(alias: String, age: String, gender: String, emojiAvatar: String, profileImage: String? = null) {
         viewModelScope.launch {
-            repository.registerUser(alias, age, gender, emojiAvatar)
+            repository.registerUser(alias, age, gender, emojiAvatar, profileImage)
         }
      }
 
-    fun updateProfile(alias: String, age: String, gender: String, emojiAvatar: String) {
+    fun updateProfile(alias: String, age: String, gender: String, emojiAvatar: String, profileImage: String? = null) {
         viewModelScope.launch {
-            repository.updateUser(alias, age, gender, emojiAvatar)
+            repository.updateUser(alias, age, gender, emojiAvatar, profileImage)
         }
     }
 }

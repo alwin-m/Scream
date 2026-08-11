@@ -26,9 +26,11 @@ import com.scream.app.ui.theme.ScreamSurfaceVariant
 fun AvatarView(
     avatarStr: String,
     modifier: Modifier = Modifier,
+    profileImage: String? = null,
     size: Dp = 40.dp,
     fontSize: TextUnit = 20.sp
 ) {
+    val imageSource = profileImage?.ifBlank { null } ?: avatarStr
     Box(
         modifier = modifier
             .size(size)
@@ -36,10 +38,10 @@ fun AvatarView(
             .background(ScreamSurfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        val bitmap = remember(avatarStr) {
-            if (avatarStr.length > 16 && (avatarStr.contains("/") || avatarStr.contains("+"))) {
+        val bitmap = remember(imageSource) {
+            if (imageSource.length > 16 && (imageSource.contains("/") || imageSource.contains("+"))) {
                 runCatching {
-                    val bytes = Base64.decode(avatarStr, Base64.NO_WRAP)
+                    val bytes = Base64.decode(imageSource, Base64.NO_WRAP)
                     BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 }.getOrNull()
             } else null
