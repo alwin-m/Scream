@@ -23,9 +23,8 @@ import java.security.SecureRandom
  *
  * ## Key storage
  *
- * For the MVP, the private key is stored as a hex-encoded string in the
- * encrypted DataStore alongside the SCREAM identity. A future upgrade should
- * move this to Android Keystore for hardware-backed protection.
+ * The private key is wrapped by an Android Keystore AES-GCM key before it is
+ * stored in DataStore. Legacy raw-hex values remain readable for migration.
  */
 class IdentityManager(private val context: Context) {
 
@@ -88,7 +87,7 @@ class IdentityManager(private val context: Context) {
         // Persist
         context.dataStore.edit { prefs ->
             prefs[BITCHAT_PUBLIC_KEY] = publicKeyBytes.toHex()
-            prefs[BITCHAT_PRIVATE_KEY] = privateKeyBytes.toHex()
+            prefs[BITCHAT_PRIVATE_KEY] = SecureIdentityStore.encrypt(context, privateKeyBytes)
             prefs[BITCHAT_SENDER_ID] = senderId.toHex()
         }
 
@@ -116,7 +115,13 @@ class IdentityManager(private val context: Context) {
     /** Load the BitChat private key bytes. Only call when needed for signing/encryption. */
     suspend fun getBitChatPrivateKey(): ByteArray? {
         val prefs = context.dataStore.data.first()
-        return prefs[BITCHAT_PRIVATE_KEY]?.hexToBytes()
+        val stored = prefs[BITCHAT_PRIVATE_KEY] ?: return null
+        SecureIdentityStore.decrypt(context, stored)?.let { return it }
+        return runCatching {
+            val legacy = stored.hexToBytes()
+            context.dataStore.edit { it[BITCHAT_PRIVATE_KEY] = SecureIdentityStore.encrypt(context, legacy) }
+            legacy
+        }.getOrNull()
     }
 
     // ── Cross-protocol identity ──────────────────────────────────────────────

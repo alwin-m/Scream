@@ -30,7 +30,9 @@ object BuildIntegrity {
      *   `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`
      * then SHA-256 hex-encode it.
      */
-    private const val OFFICIAL_SIGNING_HASH = "SCREAM_OFFICIAL_DEBUG"
+    // Deliberately blank until the release signing certificate is pinned by the
+    // project owner. A placeholder must never make an arbitrary APK official.
+    private const val OFFICIAL_SIGNING_HASH = ""
 
     /** Current contributor tag embedded in every build. Change per contributor. */
     const val CONTRIBUTOR_TAG = "A"
@@ -140,8 +142,7 @@ object BuildIntegrity {
 
         return when {
             peerHash == myHash -> VersionTrust.OFFICIAL
-            // Accept the placeholder during development
-            peerHash == OFFICIAL_SIGNING_HASH || myHash == OFFICIAL_SIGNING_HASH -> VersionTrust.OFFICIAL
+            OFFICIAL_SIGNING_HASH.isNotBlank() && peerHash == OFFICIAL_SIGNING_HASH -> VersionTrust.OFFICIAL
             else -> VersionTrust.MODIFIED
         }
     }
