@@ -81,13 +81,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         ScreamRepository.createPost(user, text, mediaBase64, mediaMimeType, audioDurationMs)
     }
 
-    fun incrementPostViews(postId: String) {
-        ScreamRepository.incrementPostViews(postId)
+    fun registerPostView(postId: String) {
+        currentUser.value?.id?.let { ScreamRepository.registerPostView(it, postId) }
     }
 
     fun likePost(postId: String) {
-        val user = currentUser.value ?: User(id = "#0000", alias = "Anonymous", avatar = "😎")
-        ScreamRepository.likePost(postId, userAlias = user.alias)
+        ScreamRepository.likePost(postId)
     }
 
     fun dislikePost(postId: String) {

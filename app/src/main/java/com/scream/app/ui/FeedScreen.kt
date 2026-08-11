@@ -19,8 +19,10 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -64,6 +66,7 @@ fun FeedScreen(
     viewModel: MainViewModel,
     onUserClick: (User) -> Unit
 ) {
+    val maxInlineMediaBytes = 8 * 1024 * 1024
     val context = LocalContext.current
     val posts by viewModel.posts.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
@@ -88,9 +91,14 @@ fun FeedScreen(
                 if (bitmap != null) {
                     val out = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
-                    attachmentBase64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
-                    attachmentMimeType = "image/jpeg"
-                    attachmentDurationMs = 0L
+                    val compressed = out.toByteArray()
+                    if (compressed.size > maxInlineMediaBytes) {
+                        android.widget.Toast.makeText(context, "Photo is too large for the current encrypted mesh limit (8 MB)", android.widget.Toast.LENGTH_LONG).show()
+                    } else {
+                        attachmentBase64 = Base64.encodeToString(compressed, Base64.NO_WRAP)
+                        attachmentMimeType = "image/jpeg"
+                        attachmentDurationMs = 0L
+                    }
                 }
             }
         }
@@ -100,9 +108,8 @@ fun FeedScreen(
         uri?.let {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
             if (bytes != null) {
-                if (bytes.size > 800_000) {
-                    // Alert file too large for mesh
-                    android.widget.Toast.makeText(context, "Video is too large for offline sync (max 800KB)", android.widget.Toast.LENGTH_LONG).show()
+                if (bytes.size > maxInlineMediaBytes) {
+                    android.widget.Toast.makeText(context, "Video is too large for the current encrypted mesh limit (8 MB)", android.widget.Toast.LENGTH_LONG).show()
                 } else {
                     attachmentBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
                     attachmentMimeType = "video/mp4"
@@ -405,9 +412,11 @@ fun FeedScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(posts, key = { it.id }) { post ->
-                    // Increment view locally on render
-                    LaunchedEffect(post.id) {
-                        viewModel.incrementPostViews(post.id)
+                    // A view is a unique identity receipt, never a recomposition counter.
+                    LaunchedEffect(post.id, currentUser?.id) {
+                        if (currentUser != null && post.user.id != currentUser!!.id) {
+                            viewModel.registerPostView(post.id)
+                        }
                     }
 
                     PostCard(
@@ -478,7 +487,7 @@ private fun PostCard(
                         )
                     }
                     Text(
-                        text = "👁️ ${post.views} views",
+                        text = if (post.views == 1) "1 unique view" else "${post.views} unique views",
                         style = MaterialTheme.typography.labelSmall,
                         color = ScreamTextTertiary
                     )
@@ -700,6 +709,7 @@ private fun PostCard(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun PostActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     count: Int,
@@ -713,7 +723,10 @@ private fun PostActionButton(
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onClick
+            )
             .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

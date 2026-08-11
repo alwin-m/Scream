@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,6 +49,8 @@ import com.scream.app.model.User
 import com.scream.app.ui.components.AvatarView
 import com.scream.app.ui.components.MeshTopologyLegend
 import com.scream.app.ui.components.MeshTopologyMap
+import com.scream.app.ui.components.QrIdentityDialog
+import com.scream.app.ui.components.ScreamQrIdentity
 import kotlinx.coroutines.launch
 import com.scream.app.ui.theme.*
 import java.io.ByteArrayOutputStream
@@ -76,6 +79,7 @@ fun ProfileScreen(
     var showLikesDialog by remember { mutableStateOf(false) }
     var showResharesDialog by remember { mutableStateOf(false) }
     var selectedPeerForDialog by remember { mutableStateOf<ConnectedPeer?>(null) }
+    var showQrDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScopeOuter = rememberCoroutineScope()
@@ -323,7 +327,7 @@ fun ProfileScreen(
                         )
                     }
                     Text(
-                        "${activePeers.size} peer${if (activePeers.size == 1) "" else "s"} visible",
+                        "${activePeers.size} peer${if (activePeers.size == 1) "" else "s"} visible · local radio field",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFF00D4FF).copy(alpha = 0.6f)
                     )
@@ -362,6 +366,22 @@ fun ProfileScreen(
                             fontSize = 10.sp
                         )
                     }
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(10.dp),
+                    color = Color.Black.copy(alpha = 0.48f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        "Signal view · no GPS tracking",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.72f),
+                        fontSize = 9.sp
+                    )
                 }
             }
         }
@@ -442,6 +462,27 @@ fun ProfileScreen(
                 Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Settings", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+
+    item { Spacer(modifier = Modifier.height(16.dp)) }
+
+    item {
+        Button(
+            onClick = { showQrDialog = true },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF182B55),
+                contentColor = Color.White
+            )
+        ) {
+            Icon(Icons.Default.QrCode2, contentDescription = null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Column(horizontalAlignment = Alignment.Start) {
+                Text("Share or scan QR identity", fontWeight = FontWeight.SemiBold)
+                Text("Connect without typing a username", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.68f))
             }
         }
     }
@@ -882,6 +923,18 @@ fun ProfileScreen(
         }
     }
 
+    if (showQrDialog && currentUser != null) {
+        QrIdentityDialog(
+            identity = ScreamQrIdentity(
+                userId = currentUser!!.id,
+                alias = currentUser!!.alias,
+                avatar = currentUser!!.avatar,
+                meshId = meshId
+            ),
+            onDismiss = { showQrDialog = false }
+        )
+    }
+
     // ── Peer tap dialog (from topology map) ────────────────────────────────
     selectedPeerForDialog?.let { peer ->
         UserProfileDialog(
@@ -963,6 +1016,7 @@ fun IdentityRow(
                     tint = ScreamTextTertiary,
                     modifier = Modifier.size(14.dp)
                 )
+
             }
         }
     }

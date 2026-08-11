@@ -1,13 +1,9 @@
 package com.scream.app.ui
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Campaign
@@ -20,6 +16,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,10 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.scream.app.model.ConnectedPeer
-import com.scream.app.model.NetworkStatus
 import com.scream.app.model.Room
 import com.scream.app.model.User
 import com.scream.app.ui.theme.*
+import com.scream.app.ui.components.MeshActivityIsland
 
 enum class HomeTab(
     val title: String,
@@ -44,7 +41,6 @@ enum class HomeTab(
     PRIVATE("Private", Icons.Default.Lock, Icons.Outlined.Lock),
     PROFILE("Profile", Icons.Default.Person, Icons.Outlined.Person)
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -52,12 +48,12 @@ fun HomeScreen(
     onOpenRoom: (Room) -> Unit,
     onOpenBluetoothTransfer: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(HomeTab.FEED) }
+    // Keep the originating room/private tab selected when returning from chat.
+    var selectedTab by rememberSaveable { mutableStateOf(HomeTab.FEED) }
     var selectedUserForDialog by remember { mutableStateOf<User?>(null) }
     var selectedPeerForDialog by remember { mutableStateOf<ConnectedPeer?>(null) }
     var showMeshInfoSheet by remember { mutableStateOf(false) }
     var showSettingsScreen by remember { mutableStateOf(false) }
-    val peerCount by viewModel.peerCount.collectAsState()
     val activePeers by viewModel.activePeers.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     val rooms by viewModel.rooms.collectAsState()
@@ -68,28 +64,6 @@ fun HomeScreen(
         com.scream.app.network.MeshNetworkManager.setFastDiscoveryMode(true)
         kotlinx.coroutines.delay(12_000L)
         com.scream.app.network.MeshNetworkManager.setFastDiscoveryMode(false)
-    }
-
-    val animatedPeerCount by animateIntAsState(
-        targetValue = peerCount,
-        animationSpec = tween(durationMillis = 600, easing = LinearEasing),
-        label = "peer_count"
-    )
-
-    val statusColor by animateColorAsState(
-        targetValue = when (networkStatus) {
-            NetworkStatus.ACTIVE -> StatusConnected
-            NetworkStatus.LIMITED -> WarningAmber
-            NetworkStatus.OFFLINE -> StatusOffline
-        },
-        animationSpec = tween(400),
-        label = "status_color"
-    )
-
-    val statusLabel = when (networkStatus) {
-        NetworkStatus.ACTIVE -> "Connected"
-        NetworkStatus.LIMITED -> "Discovering…"
-        NetworkStatus.OFFLINE -> "Offline"
     }
 
     Scaffold(
@@ -117,43 +91,11 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // Bluetooth status pill
-                    Surface(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .clickable { showMeshInfoSheet = true },
-                        color = statusColor.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(statusColor)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = statusLabel,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = statusColor,
-                                fontSize = 12.sp
-                            )
-                            if (animatedPeerCount > 0) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "· ${formatCompactCount(animatedPeerCount)}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = statusColor.copy(alpha = 0.7f),
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
+                    MeshActivityIsland(
+                        networkStatus = networkStatus,
+                        peers = activePeers,
+                        onClick = { showMeshInfoSheet = true }
+                    )
                 }
             }
         },
@@ -269,23 +211,5 @@ fun HomeScreen(
                 onOpenRoom(privateRoom)
             }
         )
-    }
-}
-
-fun formatCompactCount(count: Int): String {
-    return when {
-        count >= 10_000_000 -> "${count / 1_000_000}M+"
-        count >= 1_000_000 -> {
-            val m = count / 1_000_000.0
-            if (m >= 10.0) "${m.toInt()}M+" else String.format("%.1fM", m) + "+"
-        }
-        count >= 100_000 -> "${count / 1_000}K+"
-        count >= 10_000 -> "${count / 1_000}K+"
-        count >= 1_000 -> {
-            val k = count / 1_000.0
-            if (k >= 10.0) "${k.toInt()}K+" else String.format("%.1fK", k) + "+"
-        }
-        count >= 100 -> "${count}+"
-        else -> "$count"
     }
 }

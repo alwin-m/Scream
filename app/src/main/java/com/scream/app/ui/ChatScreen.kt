@@ -1082,8 +1082,14 @@ fun CustomChatBubble(
                 }
                 if (isMine) {
                     Spacer(modifier = Modifier.width(6.dp))
-                    val deliveryColor = if (msg.deliveryStatus == "Delivered") ScreamBlueLight else ScreamTextTertiary
+                    val deliveryColor = when (msg.deliveryStatus) {
+                        "Relayed" -> ScreamBlueLight
+                        "Queued" -> WarningAmber
+                        else -> ScreamTextTertiary
+                    }
                     val deliveryIcon = when (msg.deliveryStatus) {
+                        "Queued" -> Icons.Default.Schedule
+                        "Relayed" -> Icons.Default.Done
                         "Sending" -> Icons.Default.Schedule
                         "Delivered" -> Icons.Default.DoneAll
                         else -> Icons.Default.Check
