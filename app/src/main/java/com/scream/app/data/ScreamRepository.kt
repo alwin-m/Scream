@@ -84,6 +84,12 @@ object ScreamRepository {
 
     fun updateActivePeers(peers: List<ConnectedPeer>) {
         _activePeers.value = peers
+        val livePublicCount = peers.size + 1
+        _rooms.value = _rooms.value.map { room ->
+            if (!room.isPrivate && !room.name.startsWith("Private:")) {
+                room.copy(memberCount = livePublicCount)
+            } else room
+        }
         val directCount = peers.count { it.connectionType == PeerConnectionType.DIRECT }
         val nearbyCount = peers.count { it.connectionType == PeerConnectionType.NEARBY_DISCOVERED }
         val reachableCount = peers.count { it.connectionType == PeerConnectionType.MESH_REACHABLE }
@@ -341,7 +347,7 @@ object ScreamRepository {
             name = name,
             icon = icon,
             preview = "Room created",
-            memberCount = _peerCount.value,
+            memberCount = if (isPrivate) 1 else _peerCount.value,
             isPrivate = isPrivate,
             adminId = admin?.id.orEmpty()
         )
@@ -487,6 +493,7 @@ object ScreamRepository {
             put("id", newMsg.id)
             put("roomId", roomId)
             put("body", text)
+            addPrivateProfileImage(this, roomId, sender)
             if (replyToId != null) {
                 put("replyToId", replyToId)
                 put("replyToSender", replyToSender)
@@ -540,6 +547,7 @@ object ScreamRepository {
             put("kind", newMsg.kind.name)
             put("audioBase64", audioBase64)
             put("audioDurationMs", durationMs)
+            addPrivateProfileImage(this, roomId, sender)
             if (replyToId != null) {
                 put("replyToId", replyToId)
                 put("replyToSender", replyToSender)
@@ -593,6 +601,7 @@ object ScreamRepository {
             put("kind", newMsg.kind.name)
             put("mediaBase64", imageBase64)
             put("mediaMimeType", mimeType)
+            addPrivateProfileImage(this, roomId, sender)
             if (replyToId != null) {
                 put("replyToId", replyToId)
                 put("replyToSender", replyToSender)
@@ -600,6 +609,13 @@ object ScreamRepository {
             }
         }
         P2pMeshEngine.broadcastPayload("CHAT_MESSAGE", payload)
+    }
+
+    private fun addPrivateProfileImage(payload: JSONObject, roomId: String, sender: User) {
+        val room = _rooms.value.firstOrNull { it.id == roomId }
+        if (room?.isPrivate == true) {
+            sender.profileImage?.let { payload.put("profileImage", it) }
+        }
     }
 
     fun receiveRemoteChatMessage(
@@ -757,7 +773,7 @@ object ScreamRepository {
         val privateRoom = Room(
             id = roomId,
             name = "Private: ${peer.alias}",
-            icon = peer.avatar,
+            icon = peer.profileImage ?: peer.avatar,
             preview = "Private connection started",
             memberCount = 2,
             isPrivate = true,
@@ -898,6 +914,7 @@ object ScreamRepository {
         put("id", id)
         put("alias", alias)
         put("avatar", avatar)
+        profileImage?.let { put("profileImage", it) }
         put("age", age)
         put("gender", gender)
     }
@@ -966,6 +983,7 @@ object ScreamRepository {
         id = optString("id"),
         alias = optString("alias"),
         avatar = optString("avatar", "😎"),
+        profileImage = optString("profileImage").takeIf { it.isNotBlank() },
         age = optString("age", ""),
         gender = optString("gender", "")
     )

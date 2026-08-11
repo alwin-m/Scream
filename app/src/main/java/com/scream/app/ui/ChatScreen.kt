@@ -195,8 +195,6 @@ fun ChatScreen(
         com.scream.app.model.NetworkStatus.OFFLINE -> StatusOffline
     }
 
-    val isAdmin = activeRoom.adminId.isNotBlank() && activeRoom.adminId == currentUser?.id
-
     Scaffold(
         containerColor = ScreamBlack,
         topBar = {
@@ -275,9 +273,13 @@ fun ChatScreen(
                         },
                         actions = {
                             if (!isSearching) {
-                                if (activeRoom.isPrivate && isAdmin && !activeRoom.name.startsWith("Private:")) {
+                                if (!activeRoom.name.startsWith("Private:")) {
                                     IconButton(onClick = { showMembersSheet = true }) {
-                                        Icon(Icons.Default.GroupAdd, contentDescription = "Manage Members", tint = ScreamTextPrimary)
+                                        Icon(
+                                            Icons.Default.GroupAdd,
+                                            contentDescription = if (activeRoom.isPrivate) "Manage Members" else "View Members",
+                                            tint = ScreamTextPrimary
+                                        )
                                     }
                                 }
                                 IconButton(onClick = { isSearching = true }) {
@@ -600,6 +602,11 @@ fun ChatScreen(
                     items(filteredMessages, key = { it.id }) { msg ->
                         CustomChatBubble(
                             msg = msg,
+                            avatar = if (activeRoom.isPrivate) {
+                                msg.sender.profileImage ?: msg.sender.avatar
+                            } else {
+                                msg.sender.avatar
+                            },
                             onDeleteForMe = { viewModel.deleteChatMessageForMe(activeRoom.id, msg.id) },
                             onDeleteForEveryone = { viewModel.deleteChatMessageForEveryone(activeRoom.id, msg.id) },
                             onPin = { viewModel.setChatMessagePinned(activeRoom.id, msg.id, msg.pinnedUntil == null) },
@@ -739,9 +746,13 @@ fun ChatScreen(
 
     // ── Private Room Invite Members Sheet ────────────────────────────────────
     if (showMembersSheet) {
-        val currentMembers = activeRoom.members
+        val currentMembers = if (activeRoom.isPrivate) {
+            activeRoom.members
+        } else {
+            activePeers.map { it.user.id }
+        }
         val nonMembers = activePeers.filter { peer ->
-            peer.user.id != currentUser?.id && !currentMembers.contains(peer.user.id)
+            activeRoom.isPrivate && peer.user.id != currentUser?.id && !currentMembers.contains(peer.user.id)
         }
 
         Dialog(onDismissRequest = { showMembersSheet = false }) {
@@ -827,11 +838,13 @@ fun ChatScreen(
                                         Spacer(modifier = Modifier.width(10.dp))
                                         Text(alias, color = ScreamTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                     }
-                                    IconButton(
-                                        onClick = { viewModel.removeUserFromPrivateRoom(activeRoom.id, memberId) },
-                                        modifier = Modifier.size(28.dp)
-                                    ) {
-                                        Icon(Icons.Default.RemoveCircle, "Remove", tint = ErrorRed, modifier = Modifier.size(18.dp))
+                                    if (activeRoom.isPrivate) {
+                                        IconButton(
+                                            onClick = { viewModel.removeUserFromPrivateRoom(activeRoom.id, memberId) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(Icons.Default.RemoveCircle, "Remove", tint = ErrorRed, modifier = Modifier.size(18.dp))
+                                        }
                                     }
                                 }
                             }
@@ -840,19 +853,20 @@ fun ChatScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Text(
-                        "Add Nearby Peers",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = ScreamTextTertiary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    if (activeRoom.isPrivate) {
+                        Text(
+                            "Add Nearby Peers",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ScreamTextTertiary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                         if (nonMembers.isEmpty()) {
                             item {
                                 Text(
@@ -889,6 +903,7 @@ fun ChatScreen(
                                 }
                             }
                         }
+                        }
                     }
                 }
             }
@@ -900,6 +915,7 @@ fun ChatScreen(
 @Composable
 fun CustomChatBubble(
     msg: ChatMessage,
+    avatar: String = msg.sender.avatar,
     onDeleteForMe: () -> Unit,
     onDeleteForEveryone: () -> Unit,
     onPin: () -> Unit,
@@ -922,7 +938,7 @@ fun CustomChatBubble(
         horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
     ) {
         if (!isMine) {
-            AvatarView(avatarStr = msg.sender.avatar, size = 36.dp, fontSize = 18.sp)
+            AvatarView(avatarStr = avatar, size = 36.dp, fontSize = 18.sp)
             Spacer(modifier = Modifier.width(10.dp))
         }
 

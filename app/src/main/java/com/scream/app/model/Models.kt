@@ -4,6 +4,8 @@ data class User(
     val id: String,
     val alias: String,
     val avatar: String = "😎",
+    /** Optional photo used in private conversations; public surfaces keep [avatar]. */
+    val profileImage: String? = null,
     val age: String = "",
     val gender: String = ""
 )

@@ -44,6 +44,7 @@ import com.scream.app.data.ScreamRepository
 import com.scream.app.identity.dataStore
 import com.scream.app.identity.UserPreferencesRepository
 import com.scream.app.model.ConnectedPeer
+import com.scream.app.model.User
 import com.scream.app.ui.components.AvatarView
 import com.scream.app.ui.components.MeshTopologyLegend
 import com.scream.app.ui.components.MeshTopologyMap
@@ -55,7 +56,8 @@ import java.io.ByteArrayOutputStream
 fun ProfileScreen(
     viewModel: MainViewModel,
     onOpenBluetoothTransfer: () -> Unit,
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    onStartPrivateChat: (User) -> Unit = {}
 ) {
     val context = LocalContext.current
     val currentUser by viewModel.currentUser.collectAsState()
@@ -558,7 +560,8 @@ fun ProfileScreen(
         var tempAlias by remember { mutableStateOf(currentUser?.alias.orEmpty()) }
         var tempAge by remember { mutableStateOf(currentUser?.age.orEmpty()) }
         var tempGender by remember { mutableStateOf(currentUser?.gender.orEmpty()) }
-        var tempAvatar by remember { mutableStateOf(currentUser?.avatar.orEmpty()) }
+        var tempEmojiAvatar by remember { mutableStateOf(currentUser?.avatar.orEmpty()) }
+        var tempProfileImage by remember { mutableStateOf(currentUser?.profileImage) }
 
         val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -568,7 +571,7 @@ fun ProfileScreen(
                         val out = ByteArrayOutputStream()
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
                         val bytes = out.toByteArray()
-                        tempAvatar = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        tempProfileImage = Base64.encodeToString(bytes, Base64.NO_WRAP)
                     }
                 }
             }
@@ -591,13 +594,35 @@ fun ProfileScreen(
                             .clip(CircleShape)
                             .border(2.dp, ScreamBlue, CircleShape)
                     ) {
-                        AvatarView(avatarStr = tempAvatar, size = 72.dp, fontSize = 32.sp)
+                        AvatarView(avatarStr = tempProfileImage ?: tempEmojiAvatar, size = 72.dp, fontSize = 32.sp)
                     }
                     Text(
-                        "Tap avatar to change profile picture",
+                        "Private chats use your photo; public chats use your emoji",
                         style = MaterialTheme.typography.labelSmall,
                         color = ScreamTextTertiary
                     )
+
+                    Text(
+                        "Public avatar",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ScreamTextSecondary,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf("😎", "😊", "🔥", "🌟", "🦊", "🐼", "🚀", "🎧").forEach { emoji ->
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(if (tempEmojiAvatar == emoji) ScreamBlue.copy(alpha = 0.25f) else ScreamSurfaceTop)
+                                    .clickable { tempEmojiAvatar = emoji },
+                                contentAlignment = Alignment.Center
+                            ) { Text(emoji, fontSize = 19.sp) }
+                        }
+                    }
 
                     OutlinedTextField(
                         value = tempAlias,
@@ -652,7 +677,8 @@ fun ProfileScreen(
                             alias = tempAlias.ifBlank { "Anonymous" },
                             age = tempAge,
                             gender = tempGender,
-                            avatar = tempAvatar.ifBlank { "😎" }
+                            avatar = tempEmojiAvatar.ifBlank { "😎" },
+                            profileImage = tempProfileImage
                         )
                         showEditDialog = false
                     },
@@ -819,7 +845,7 @@ fun ProfileScreen(
             user = peer.user,
             connectedPeer = peer,
             onDismiss = { selectedPeerForDialog = null },
-            onStartPrivateChat = { /* handled by HomeScreen */ }
+            onStartPrivateChat = onStartPrivateChat
         )
     }
 }

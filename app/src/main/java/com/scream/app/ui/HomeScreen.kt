@@ -225,7 +225,8 @@ fun HomeScreen(
                     HomeTab.PROFILE -> ProfileScreen(
                         viewModel = viewModel,
                         onOpenBluetoothTransfer = onOpenBluetoothTransfer,
-                        onOpenSettings = { showSettingsScreen = true }
+                        onOpenSettings = { showSettingsScreen = true },
+                        onStartPrivateChat = { peer -> onOpenRoom(viewModel.getOrCreatePrivateRoom(peer)) }
                     )
                 }
             }

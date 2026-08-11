@@ -21,6 +21,7 @@ data class UserProfile(
     val age: String,
     val gender: String,
     val emojiAvatar: String,
+    val profileImage: String? = null,
     val isRegistered: Boolean,
     val backgroundMode: BackgroundMode = BackgroundMode.ACTIVE,
     val batteryVisibility: BatteryVisibility = BatteryVisibility.FRIENDS,
@@ -36,7 +37,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val ALIAS_KEY = stringPreferencesKey("alias")
         val AGE_KEY = stringPreferencesKey("age")
         val GENDER_KEY = stringPreferencesKey("gender")
-        val EMOJI_AVATAR_KEY = stringPreferencesKey("emoji_avatar")
+    val EMOJI_AVATAR_KEY = stringPreferencesKey("emoji_avatar")
+    val PROFILE_IMAGE_KEY = stringPreferencesKey("profile_image")
         val IS_REGISTERED_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("is_registered")
         val BACKGROUND_MODE_KEY = stringPreferencesKey("background_mode")
         val BATTERY_VISIBILITY_KEY = stringPreferencesKey("battery_visibility")
@@ -57,6 +59,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             age = preferences[AGE_KEY] ?: "",
             gender = preferences[GENDER_KEY] ?: "",
             emojiAvatar = preferences[EMOJI_AVATAR_KEY] ?: "😎",
+            profileImage = preferences[PROFILE_IMAGE_KEY],
             isRegistered = preferences[IS_REGISTERED_KEY] ?: false,
             backgroundMode = bgMode,
             batteryVisibility = battVis,
@@ -66,7 +69,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         )
     }
 
-    suspend fun registerUser(alias: String, age: String, gender: String, emojiAvatar: String) {
+    suspend fun registerUser(alias: String, age: String, gender: String, emojiAvatar: String, profileImage: String? = null) {
         val newUuid = UUID.randomUUID().toString()
         dataStore.edit { preferences ->
             preferences[UUID_KEY] = newUuid
@@ -74,16 +77,19 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             preferences[AGE_KEY] = age
             preferences[GENDER_KEY] = gender
             preferences[EMOJI_AVATAR_KEY] = emojiAvatar
+            profileImage?.let { preferences[PROFILE_IMAGE_KEY] = it }
             preferences[IS_REGISTERED_KEY] = true
         }
     }
 
-    suspend fun updateUser(alias: String, age: String, gender: String, emojiAvatar: String) {
+    suspend fun updateUser(alias: String, age: String, gender: String, emojiAvatar: String, profileImage: String? = null) {
         dataStore.edit { preferences ->
             preferences[ALIAS_KEY] = alias
             preferences[AGE_KEY] = age
             preferences[GENDER_KEY] = gender
             preferences[EMOJI_AVATAR_KEY] = emojiAvatar
+            if (profileImage.isNullOrBlank()) preferences.remove(PROFILE_IMAGE_KEY)
+            else preferences[PROFILE_IMAGE_KEY] = profileImage
         }
     }
 

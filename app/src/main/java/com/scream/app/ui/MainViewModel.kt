@@ -48,6 +48,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     id = if (profile.uuid.length >= 4) "#" + profile.uuid.take(4).uppercase() else "#0000",
                     alias = profile.alias,
                     avatar = profile.emojiAvatar,
+                    profileImage = profile.profileImage,
                     age = profile.age,
                     gender = profile.gender
                 )
@@ -115,9 +116,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         ScreamRepository.removeUserFromPrivateRoom(roomId, targetUserId)
     }
 
-    fun updateProfile(alias: String, age: String, gender: String, avatar: String) {
+    fun updateProfile(alias: String, age: String, gender: String, avatar: String, profileImage: String? = null) {
         viewModelScope.launch {
-            userPrefs.updateUser(alias, age, gender, avatar)
+            userPrefs.updateUser(alias, age, gender, avatar, profileImage)
         }
     }
 
