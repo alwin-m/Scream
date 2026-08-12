@@ -52,12 +52,14 @@ class IdentityManager(private val context: Context) {
         val profile = getScreamProfile()
         if (!profile.isRegistered) return null
         val shortId = "#${profile.uuid.take(4).uppercase()}"
+        val bitChatId = getOrCreateBitChatIdentity()
         return User(
             id = shortId,
             alias = profile.alias.ifBlank { "Anonymous" },
             avatar = profile.emojiAvatar.ifBlank { "😎" },
             age = profile.age,
-            gender = profile.gender
+            gender = profile.gender,
+            publicKey = bitChatId.publicKey.toHex()
         )
     }
 

@@ -7,7 +7,8 @@ data class User(
     /** Optional photo used in private conversations; public surfaces keep [avatar]. */
     val profileImage: String? = null,
     val age: String = "",
-    val gender: String = ""
+    val gender: String = "",
+    val publicKey: String? = null
 )
 
 data class Post(
