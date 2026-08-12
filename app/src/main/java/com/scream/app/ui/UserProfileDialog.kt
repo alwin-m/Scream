@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scream.app.model.ConnectionQuality
 import com.scream.app.model.ConnectedPeer
+import com.scream.app.identity.SecurityUtils
 import com.scream.app.model.ProtocolType
 import com.scream.app.model.User
 import com.scream.app.ui.components.AvatarView
@@ -25,6 +26,7 @@ import com.scream.app.ui.theme.*
 @Composable
 fun UserProfileDialog(
     user: User,
+    currentUser: User? = null,
     connectedPeer: ConnectedPeer? = null,
     onDismiss: () -> Unit,
     onStartPrivateChat: (User) -> Unit
@@ -148,6 +150,28 @@ fun UserProfileDialog(
                         style = MaterialTheme.typography.bodySmall,
                         color = ScreamTextTertiary
                     )
+                }
+
+                val safetyNumber = SecurityUtils.calculateSafetyNumber(currentUser?.publicKey, user.publicKey)
+                if (safetyNumber != null) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        color = ScreamSurfaceTop,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("🔒 Security Verification", style = MaterialTheme.typography.labelSmall, color = ScreamTextTertiary)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = safetyNumber,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = ScreamGreen,
+                                letterSpacing = 2.sp
+                            )
+                        }
+                    }
                 }
 
                 val details = mutableListOf<String>()

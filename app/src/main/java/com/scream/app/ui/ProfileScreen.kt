@@ -141,6 +141,19 @@ fun ProfileScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = ScreamTextTertiary
         )
+        
+        com.scream.app.identity.SecurityUtils.getPublicKeyFingerprint(currentUser?.publicKey)?.let { fp ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(color = ScreamSurfaceVariant, shape = RoundedCornerShape(8.dp)) {
+                Text(
+                    text = "🔑 $fp",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = ScreamGreen,
+                    letterSpacing = 1.sp
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -940,6 +953,7 @@ fun ProfileScreen(
     selectedPeerForDialog?.let { peer ->
         UserProfileDialog(
             user = peer.user,
+            currentUser = currentUser,
             connectedPeer = peer,
             onDismiss = { selectedPeerForDialog = null },
             onStartPrivateChat = onStartPrivateChat

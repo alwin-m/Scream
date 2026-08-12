@@ -202,6 +202,7 @@ fun HomeScreen(
     selectedUserForDialog?.let { targetUser ->
         UserProfileDialog(
             user = targetUser,
+            currentUser = currentUser,
             connectedPeer = selectedPeerForDialog,
             onDismiss = { selectedUserForDialog = null; selectedPeerForDialog = null },
             onStartPrivateChat = { peer ->
