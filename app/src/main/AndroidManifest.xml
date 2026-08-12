@@ -84,7 +84,7 @@
             android:name=".network.MeshForegroundService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:foregroundServiceType="connectedDevice|dataSync" />
 
         <!--
             BluetoothBootReceiver — wakes up the mesh when:
