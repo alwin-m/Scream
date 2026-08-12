@@ -28,14 +28,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val userPrefs = UserPreferencesRepository(application.dataStore)
 
     init {
-        ScreamRepository.init(application)
-        TransportManager.init(application)
+        try {
+            ScreamRepository.init(application)
+        } catch (e: Exception) {
+            android.util.Log.e("MainViewModel", "Failed to init ScreamRepository: ${e.message}")
+        }
+        try {
+            TransportManager.init(application)
+        } catch (e: Exception) {
+            android.util.Log.e("MainViewModel", "Failed to init TransportManager: ${e.message}")
+        }
         // MeshNetworkManager and BleGattServer are started by MeshForegroundService.
         // We only need to initialise P2pMeshEngine here once the user profile is loaded.
 
         viewModelScope.launch {
             while (true) {
-                ScreamRepository.purgeExpiredContent()
+                try {
+                    ScreamRepository.purgeExpiredContent()
+                } catch (e: Exception) {
+                    android.util.Log.e("MainViewModel", "Error in purgeExpiredContent loop: ${e.message}")
+                }
                 delay(60 * 60 * 1000L)
             }
         }

@@ -37,7 +37,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        try {
+            enableEdgeToEdge()
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "enableEdgeToEdge failed: ${e.message}")
+        }
 
         setContent {
             ScreamTheme {
@@ -100,6 +104,7 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Failed to start MeshForegroundService: ${e.message}")
+            // Do not crash the app; the mesh service is not essential for UI.
         }
     }
 }

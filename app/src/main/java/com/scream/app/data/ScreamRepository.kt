@@ -65,11 +65,23 @@ object ScreamRepository {
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
-        dbHelper = ScreamDbHelper(context.applicationContext)
-        localMeshId = generateMeshId(context)
-        _meshStats.value = _meshStats.value.copy(meshId = localMeshId)
+        try {
+            dbHelper = ScreamDbHelper(context.applicationContext)
+        } catch (e: Exception) {
+            android.util.Log.e("ScreamRepository", "Failed to initialize dbHelper: ${e.message}")
+        }
+        try {
+            localMeshId = generateMeshId(context)
+            _meshStats.value = _meshStats.value.copy(meshId = localMeshId)
+        } catch (e: Exception) {
+            android.util.Log.e("ScreamRepository", "Failed to generate mesh ID: ${e.message}")
+        }
         restoreLocalData()
-        purgeExpiredContent()
+        try {
+            purgeExpiredContent()
+        } catch (e: Exception) {
+            android.util.Log.e("ScreamRepository", "Failed to purge expired content: ${e.message}")
+        }
     }
 
     fun getMeshId(): String = localMeshId

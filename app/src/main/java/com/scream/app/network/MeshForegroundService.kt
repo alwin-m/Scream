@@ -116,20 +116,31 @@ class MeshForegroundService : Service() {
         instance = this
         Log.d(TAG, "MeshForegroundService created")
 
-        createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification())
+        try {
+            createNotificationChannel()
+            startForeground(NOTIFICATION_ID, buildNotification())
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground notification: ${e.message}")
+        }
         try {
             registerReceiver(bluetoothStateReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
         } catch (e: Exception) {
             Log.w(TAG, "Failed to register bluetoothStateReceiver: ${e.message}")
         }
-        bootMesh()
+        try {
+            bootMesh()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to boot mesh on service create: ${e.message}")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Re-boot if something stopped the mesh mid-life
         if (!MeshNetworkManager.isRunning()) {
-            bootMesh()
+            try {
+                bootMesh()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to boot mesh on start command: ${e.message}")
+            }
         }
         scheduleDozeWakeupPulse()
         return START_STICKY
