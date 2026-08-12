@@ -177,6 +177,7 @@ fun FeedScreen(
                 Row(verticalAlignment = Alignment.Top) {
                     AvatarView(
                         avatarStr = currentUser?.avatar.orEmpty(),
+                        profileImage = currentUser?.profileImage,
                         size = 40.dp,
                         fontSize = 20.sp
                     )
@@ -464,7 +465,7 @@ private fun PostCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.clickable { onUserClick(post.user) }) {
-                    AvatarView(avatarStr = post.user.avatar, size = 36.dp, fontSize = 18.sp)
+                    AvatarView(avatarStr = post.user.avatar, profileImage = post.user.profileImage, size = 36.dp, fontSize = 18.sp)
                 }
 
                 Spacer(modifier = Modifier.width(10.dp))

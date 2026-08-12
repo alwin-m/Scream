@@ -118,6 +118,7 @@ fun ProfileScreen(
         ) {
             AvatarView(
                 avatarStr = currentUser?.avatar.orEmpty(),
+                profileImage = currentUser?.profileImage,
                 size = 100.dp,
                 fontSize = 48.sp
             )

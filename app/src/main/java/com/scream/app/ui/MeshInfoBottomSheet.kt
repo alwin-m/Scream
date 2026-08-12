@@ -453,6 +453,7 @@ fun MeshVisualizationGraph(
                                 .align(Alignment.Center)
                                 .offset(x = offsetX, y = offsetY),
                             avatar = peer.user.avatar,
+                            profileImage = peer.user.profileImage,
                             name = peer.user.alias,
                             color = ScreamViolet,
                             pulseScale = 1.0f,
@@ -469,6 +470,7 @@ fun MeshVisualizationGraph(
 fun NodeIcon(
     modifier: Modifier = Modifier,
     avatar: String,
+    profileImage: String? = null,
     name: String,
     color: Color,
     pulseScale: Float,
@@ -490,7 +492,7 @@ fun NodeIcon(
                         .background(color.copy(alpha = (2f - pulseScale).coerceIn(0f, 0.15f)))
                 )
             }
-            AvatarView(avatarStr = avatar, size = 34.dp, fontSize = 16.sp)
+            AvatarView(avatarStr = avatar, profileImage = profileImage, size = 34.dp, fontSize = 16.sp)
         }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
@@ -594,7 +596,7 @@ fun ExpandedPeerListItem(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AvatarView(avatarStr = peer.user.avatar, size = 40.dp, fontSize = 20.sp)
+            AvatarView(avatarStr = peer.user.avatar, profileImage = peer.user.profileImage, size = 40.dp, fontSize = 20.sp)
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -720,7 +722,7 @@ fun NodeDetailOverlay(
                     .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AvatarView(avatarStr = peer.user.avatar, size = 72.dp, fontSize = 36.sp)
+                AvatarView(avatarStr = peer.user.avatar, profileImage = peer.user.profileImage, size = 72.dp, fontSize = 36.sp)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = peer.user.alias,

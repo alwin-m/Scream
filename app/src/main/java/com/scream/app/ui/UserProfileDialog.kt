@@ -48,6 +48,7 @@ fun UserProfileDialog(
                 // Avatar
                 AvatarView(
                     avatarStr = user.avatar,
+                    profileImage = user.profileImage,
                     size = 80.dp,
                     fontSize = 42.sp
                 )

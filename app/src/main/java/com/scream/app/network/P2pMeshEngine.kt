@@ -144,6 +144,7 @@ object P2pMeshEngine {
                 put("id", user.id)
                 put("alias", user.alias)
                 put("avatar", user.avatar)
+                user.profileImage?.let { put("profileImage", it) }
                 put("batteryLevel", ScreamRepository.getBatteryLevel())
                 put("osVersion", ScreamRepository.getOSVersion())
                 localFingerprint?.let { put("appFingerprint", it) }
@@ -227,7 +228,7 @@ object P2pMeshEngine {
                     id = senderJson.optString("id"),
                     alias = senderJson.optString("alias"),
                     avatar = senderJson.optString("avatar", "😎"),
-                    profileImage = null
+                    profileImage = senderJson.optString("profileImage").takeIf { it.isNotEmpty() }
                 )
             } else null
 
@@ -581,7 +582,7 @@ object P2pMeshEngine {
                         id = senderJson.optString("id"),
                         alias = senderJson.optString("alias"),
                         avatar = senderJson.optString("avatar", "😎"),
-                        profileImage = null
+                        profileImage = senderJson.optString("profileImage").takeIf { it.isNotEmpty() }
                     )
                 } else null
 

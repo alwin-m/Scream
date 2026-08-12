@@ -806,7 +806,7 @@ fun ChatScreen(
                                     modifier = Modifier.padding(10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    AvatarView(avatarStr = currentUser?.avatar.orEmpty(), size = 32.dp)
+                                    AvatarView(avatarStr = currentUser?.avatar.orEmpty(), profileImage = currentUser?.profileImage, size = 32.dp)
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         "You (Owner)",
@@ -834,7 +834,7 @@ fun ChatScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        AvatarView(avatarStr = avatar, size = 32.dp)
+                                        AvatarView(avatarStr = avatar, profileImage = peer?.user?.profileImage, size = 32.dp)
                                         Spacer(modifier = Modifier.width(10.dp))
                                         Text(alias, color = ScreamTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                     }
@@ -889,7 +889,7 @@ fun ChatScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            AvatarView(avatarStr = peer.user.avatar, size = 32.dp)
+                                            AvatarView(avatarStr = peer.user.avatar, profileImage = peer.user.profileImage, size = 32.dp)
                                             Spacer(modifier = Modifier.width(10.dp))
                                             Text(peer.user.alias, color = ScreamTextPrimary, style = MaterialTheme.typography.bodyMedium)
                                         }
