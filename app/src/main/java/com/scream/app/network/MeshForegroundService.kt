@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -74,6 +75,8 @@ class MeshForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var meshLifecycleJob: Job? = null
+    private var batteryReceiver: android.content.BroadcastReceiver? = null
+    private val batteryStateFlow = kotlinx.coroutines.flow.MutableStateFlow(Pair(100, false))
 
     // ──────────────────────────────────────────────────────────────────────────
     // Service lifecycle
@@ -194,6 +197,21 @@ class MeshForegroundService : Service() {
     private fun bootMesh() {
         if (meshLifecycleJob?.isActive == true) return
 
+        if (batteryReceiver == null) {
+            batteryReceiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                    if (intent?.action == android.content.Intent.ACTION_BATTERY_CHANGED) {
+                        val level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+                        val scale = intent.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1)
+                        val pct = if (level >= 0 && scale > 0) (level * 100 / scale.toFloat()).toInt() else 100
+                        val charging = intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1) == android.os.BatteryManager.BATTERY_STATUS_CHARGING
+                        batteryStateFlow.value = Pair(pct, charging)
+                    }
+                }
+            }
+            registerReceiver(batteryReceiver, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+        }
+
         meshLifecycleJob = serviceScope.launch {
             try {
                 // Repository must be initialised before anything else
@@ -202,15 +220,13 @@ class MeshForegroundService : Service() {
                 val userPrefs = UserPreferencesRepository(applicationContext.dataStore)
                 
                 // Collect background mode & offline updates reactively
-                userPrefs.userProfileFlow.collectLatest { profile ->
+                combine(userPrefs.userProfileFlow, batteryStateFlow) { profile, battery ->
+                    Pair(profile, battery)
+                }.collectLatest { (profile, battery) ->
                     val isPermanentOffline = profile.isPermanentOffline
 
-                    // Check low battery threshold
-                    val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-                    val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-                    val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-                    val batteryPct = if (level >= 0 && scale > 0) (level * 100 / scale.toFloat()).toInt() else 100
-                    val isCharging = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) == BatteryManager.BATTERY_STATUS_CHARGING
+                    val batteryPct = battery.first
+                    val isCharging = battery.second
 
                     // Check scheduled time window
                     val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
