@@ -268,11 +268,12 @@ object ScreamRepository {
 
         if (shouldBroadcast) {
             val type = if (reaction == "DISLIKE") "DISLIKE_POST" else "LIKE_POST"
+            val stableEnvelopeId = "react_${postId}_${actorId}_${reaction ?: "NONE"}"
             P2pMeshEngine.broadcastPayload(type, JSONObject().apply {
                 put("postId", postId)
                 put("reaction", reaction ?: "")
                 put("actorAlias", actorAlias)
-            })
+            }, overrideId = stableEnvelopeId)
         }
     }
 

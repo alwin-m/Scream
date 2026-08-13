@@ -130,11 +130,11 @@ object P2pMeshEngine {
         ScreamRepository.updateActivePeers(emptyList())
     }
 
-    fun broadcastPayload(type: String, payload: JSONObject) {
+    fun broadcastPayload(type: String, payload: JSONObject, overrideId: String? = null) {
         val user = currentUser ?: return
         val messageObj = JSONObject().apply {
             put("version", PROTOCOL_VERSION)
-            put("id", UUID.randomUUID().toString())
+            put("id", overrideId ?: UUID.randomUUID().toString())
             put("type", type)
             put("sourcePeerId", user.id)
             put("timestamp", System.currentTimeMillis())
@@ -223,7 +223,7 @@ object P2pMeshEngine {
                 return
             }
 
-            val senderJson = json.optJSONObject("sender")
+            val senderJson = (json.optJSONObject("sender") ?: json.optJSONObject("user"))
             val senderUser = if (senderJson != null) {
                 User(
                     id = senderJson.optString("id"),
@@ -578,7 +578,7 @@ object P2pMeshEngine {
                     }
                     return
                 }
-                val senderJson = json.optJSONObject("sender")
+                val senderJson = (json.optJSONObject("sender") ?: json.optJSONObject("user"))
                 val senderUser = if (senderJson != null) {
                     User(
                         id = senderJson.optString("id"),
@@ -768,7 +768,7 @@ object P2pMeshEngine {
     }
 
     private fun isCompatibleBuild(json: JSONObject, endpoint: String): Boolean {
-        val peerFingerprint = json.optJSONObject("sender")?.optString("appFingerprint")
+        val peerFingerprint = (json.optJSONObject("sender") ?: json.optJSONObject("user"))?.optString("appFingerprint")
             ?.takeIf { it.isNotBlank() }
             ?: json.optJSONObject("user")?.optString("appFingerprint")?.takeIf { it.isNotBlank() }
             ?: return true
