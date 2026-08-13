@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -79,6 +80,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val posts: StateFlow<List<Post>> = ScreamRepository.posts
     val rooms: StateFlow<List<Room>> = ScreamRepository.rooms
     val activePeers: StateFlow<List<ConnectedPeer>> = ScreamRepository.activePeers
+        .debounce(300L)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
     val peerCount: StateFlow<Int> = ScreamRepository.peerCount
     val meshStats: StateFlow<MeshStats> = ScreamRepository.meshStats
     val networkStatus: StateFlow<NetworkStatus> = ScreamRepository.networkStatus
