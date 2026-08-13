@@ -73,9 +73,9 @@
       <div class="header-left">
         <div class="logo-small">S</div>
         <span class="brand-name">SCREAM</span>
-        <div class="status-badge" id="net-status-badge">
+        <div class="status-badge" id="net-status-badge" title="Local P2P Mesh Engine Status">
           <span class="status-dot green"></span>
-          <span class="status-text" id="net-status-text">Network Active</span>
+          <span class="status-text" id="net-status-text">Mesh Active</span>
         </div>
       </div>
       <div class="header-right">
@@ -112,9 +112,9 @@
         <div class="card composer-card">
           <div class="composer-header">
             <span class="user-avatar-small" id="composer-avatar">😎</span>
-            <span class="composer-title">Broadcast to the mesh...</span>
+            <span class="composer-title">Broadcast to the local mesh...</span>
           </div>
-          <textarea id="composer-text" placeholder="Speak your mind freely. No censorship..." rows="3"></textarea>
+          <textarea id="composer-text" placeholder="Speak your mind freely across nearby peers (Max 500 chars)..." rows="3" maxlength="500"></textarea>
           
           <!-- Attachment Preview Container -->
           <div id="attachment-preview" class="attachment-preview hidden">
@@ -137,7 +137,10 @@
               <button id="btn-record-voice" class="btn-icon" title="Record Voice Note">🎙️</button>
               <span id="recording-indicator" class="recording-pulse hidden">🔴 Recording... <span id="rec-timer">00:00</span></span>
             </div>
-            <button id="btn-publish-post" class="btn-primary-sm">Publish</button>
+            <div class="composer-actions-right">
+              <span id="char-counter" class="char-counter">0/500</span>
+              <button id="btn-publish-post" class="btn-primary-sm">Publish</button>
+            </div>
           </div>
         </div>
 
@@ -150,7 +153,10 @@
       <!-- TAB 2: ROOMS -->
       <section id="tab-rooms" class="tab-content">
         <div class="section-header-row">
-          <h2>Public & Private Mesh Rooms</h2>
+          <div>
+            <h2>Public Mesh Rooms</h2>
+            <p class="section-sub">Topics broadcasted across all nearby mesh hops</p>
+          </div>
           <button id="btn-create-room" class="btn-primary-sm">+ Create Room</button>
         </div>
         <div id="rooms-list" class="rooms-grid"></div>
@@ -159,7 +165,10 @@
       <!-- TAB 3: PRIVATE CHATS -->
       <section id="tab-private" class="tab-content">
         <div class="section-header-row">
-          <h2>Encrypted Private Chats</h2>
+          <div>
+            <h2>Encrypted Private Chats</h2>
+            <p class="section-sub">Direct encrypted 1-on-1 mesh communications</p>
+          </div>
         </div>
         <div id="private-rooms-list" class="rooms-grid"></div>
       </section>
@@ -186,6 +195,35 @@
               <span class="stat-num" id="stat-peers">1</span>
               <span class="stat-lbl">Nearby</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Security Identity Card -->
+        <div class="card security-card">
+          <div class="security-card-header">
+            <span class="security-icon">🛡️</span>
+            <div>
+              <h3>Security & Mesh Identity</h3>
+              <p class="security-sub">Civilian resilience encrypted transport identity</p>
+            </div>
+          </div>
+          <div class="security-details">
+            <div class="sec-row">
+              <span class="sec-label">AES Encryption:</span>
+              <span class="sec-value badge-green">AES-256-GCM Active</span>
+            </div>
+            <div class="sec-row">
+              <span class="sec-label">Routing Hop Count:</span>
+              <span class="sec-value">Max 6 Hops (TTL)</span>
+            </div>
+            <div class="sec-row">
+              <span class="sec-label">Message Retention:</span>
+              <span class="sec-value">48 Hours (Local Storage)</span>
+            </div>
+          </div>
+          <div class="security-actions">
+            <button id="btn-copy-mesh-id" class="btn-secondary-sm">📋 Copy Mesh ID</button>
+            <button id="btn-show-qr" class="btn-secondary-sm">📱 Identity Code</button>
           </div>
         </div>
       </section>
@@ -217,7 +255,7 @@
       <h3>Create New Mesh Room</h3>
       <div class="input-group">
         <label>Room Name</label>
-        <input type="text" id="modal-room-name" placeholder="e.g. Crypto & Web3" maxlength="30" />
+        <input type="text" id="modal-room-name" placeholder="e.g. Field Ops / General" maxlength="30" />
       </div>
       <div class="input-group">
         <label>Room Icon (Emoji)</label>
@@ -236,10 +274,28 @@
   <!-- DIAGNOSTICS & PEER OVERLAY -->
   <div id="modal-peers" class="modal-backdrop hidden">
     <div class="modal-card">
-      <h3>Mesh Topology & Peers</h3>
+      <h3>Mesh Topology & Diagnostics</h3>
+      <p class="modal-sub">Discovered peers over LAN UDP/TCP & Bluetooth LE</p>
       <div id="peers-list" class="peers-list-view"></div>
       <div class="modal-actions">
         <button id="btn-close-peers" class="btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR IDENTITY CODE MODAL -->
+  <div id="modal-qr" class="modal-backdrop hidden">
+    <div class="modal-card text-center">
+      <h3>Public Identity Code</h3>
+      <p class="modal-sub">Scan to pair with nearby peer</p>
+      <div class="qr-container">
+        <div id="qr-box" class="qr-box">
+          <span class="qr-icon">📱</span>
+          <div id="qr-code-text" class="qr-code-text">SCREAM-USER-0000</div>
+        </div>
+      </div>
+      <div class="modal-actions justify-center">
+        <button id="btn-close-qr" class="btn-primary">Done</button>
       </div>
     </div>
   </div>

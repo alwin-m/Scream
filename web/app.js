@@ -487,6 +487,52 @@ document.getElementById('btn-close-peers').addEventListener('click', () => {
   document.getElementById('modal-peers').classList.add('hidden');
 });
 
+// Character counter update
+const composerText = document.getElementById('composer-text');
+const charCounter = document.getElementById('char-counter');
+if (composerText && charCounter) {
+  composerText.addEventListener('input', () => {
+    charCounter.textContent = `${composerText.value.length}/500`;
+  });
+}
+
+// Copy Mesh ID & QR Identity Modal
+const btnCopyMeshId = document.getElementById('btn-copy-mesh-id');
+if (btnCopyMeshId) {
+  btnCopyMeshId.addEventListener('click', () => {
+    const meshIdStr = currentUser ? `SCREAM-${currentUser.id}` : 'SCREAM-#0000';
+    navigator.clipboard.writeText(meshIdStr).then(() => {
+      btnCopyMeshId.textContent = '✅ Copied!';
+      setTimeout(() => btnCopyMeshId.textContent = '📋 Copy Mesh ID', 2000);
+    });
+  });
+}
+
+const btnShowQr = document.getElementById('btn-show-qr');
+const btnCloseQr = document.getElementById('btn-close-qr');
+if (btnShowQr) {
+  btnShowQr.addEventListener('click', () => {
+    const meshIdStr = currentUser ? `SCREAM-${currentUser.id}` : 'SCREAM-#0000';
+    document.getElementById('qr-code-text').textContent = meshIdStr;
+    document.getElementById('modal-qr').classList.remove('hidden');
+  });
+}
+if (btnCloseQr) {
+  btnCloseQr.addEventListener('click', () => {
+    document.getElementById('modal-qr').classList.add('hidden');
+  });
+}
+
+// Send Chat on Enter key
+const chatInputText = document.getElementById('chat-input-text');
+if (chatInputText) {
+  chatInputText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      document.getElementById('chat-btn-send').click();
+    }
+  });
+}
+
 // Actions
 function likePost(id) { fetch('/api/like', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: id }) }); }
 function dislikePost(id) { fetch('/api/dislike', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postId: id }) }); }
@@ -495,3 +541,4 @@ function resharePost(id) { fetch('/api/reshare', { method: 'POST', headers: { 'C
 function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+

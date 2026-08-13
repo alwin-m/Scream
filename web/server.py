@@ -85,7 +85,7 @@ def run_udp_mesh():
                     }
                     payload = json.dumps({
                         "type": "HEARTBEAT",
-                        "user": user_json,
+                        "sender": user_json,
                         "meshId": f"WEB-{current_web_user.get('id', '0000')[:4]}"
                     }).encode('utf-8')
                     send_sock.sendto(payload, ('255.255.255.255', UDP_PORT))

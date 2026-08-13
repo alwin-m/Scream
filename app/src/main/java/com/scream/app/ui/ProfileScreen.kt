@@ -161,14 +161,21 @@ fun ProfileScreen(
         Button(
             onClick = { showEditDialog = true },
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ScreamSurfaceVariant,
-                contentColor = ScreamTextPrimary
-            )
+            contentPadding = PaddingValues(),
+            colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Transparent)
         ) {
-            Icon(Icons.Default.Edit, contentDescription = "Edit Profile", modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Edit My Profile", style = MaterialTheme.typography.labelLarge)
+            Box(
+                modifier = Modifier
+                    .background(ScreamGradient)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit Profile", modifier = Modifier.size(16.dp), tint = ScreamWhite)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Edit My Profile", style = MaterialTheme.typography.labelLarge, color = ScreamWhite)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))

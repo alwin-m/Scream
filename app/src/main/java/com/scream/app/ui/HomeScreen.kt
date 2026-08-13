@@ -70,7 +70,7 @@ fun HomeScreen(
         containerColor = ScreamBlack,
         topBar = {
             Surface(
-                color = ScreamSurface,
+                color = ScreamSurface.copy(alpha = 0.85f),
                 tonalElevation = 0.dp
             ) {
                 Row(

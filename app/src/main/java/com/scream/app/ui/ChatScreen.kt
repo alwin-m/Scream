@@ -199,7 +199,7 @@ fun ChatScreen(
         containerColor = ScreamBlack,
         topBar = {
             Surface(
-                color = ScreamSurface,
+                color = ScreamSurface.copy(alpha = 0.85f),
                 tonalElevation = 0.dp
             ) {
                 Column {
@@ -395,7 +395,7 @@ fun ChatScreen(
                     // Recording state bar
                     AnimatedVisibility(visible = recorder != null) {
                         Surface(
-                            color = ScreamSurface,
+                            color = ScreamSurface.copy(alpha = 0.85f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(

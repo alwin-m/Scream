@@ -42,6 +42,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -720,6 +721,15 @@ private fun PostActionButton(
     onCountClick: (() -> Unit)? = null
 ) {
     val tint = if (isActive) activeColor else ScreamTextTertiary
+    
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (isActive) 1.15f else 1.0f,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+        ),
+        label = "ActionScale"
+    )
 
     Row(
         modifier = Modifier
@@ -735,7 +745,12 @@ private fun PostActionButton(
             icon,
             contentDescription = null,
             tint = tint,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier
+                .size(16.dp)
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale
+                )
         )
         if (count > 0) {
             Spacer(modifier = Modifier.width(4.dp))
