@@ -52,6 +52,7 @@ enum class UnifiedMessageType {
 data class PeerAddress(
     val screamId: String? = null,
     val bitchatSenderId: ByteArray? = null,
+    val bitchatPublicKey: ByteArray? = null,
     val nostrPubkey: String? = null
 ) {
     /** Short display-friendly identifier. */

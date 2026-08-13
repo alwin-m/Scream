@@ -163,7 +163,7 @@ class ScreamProtocolAdapter : ProtocolAdapter {
                 put("osVersion", ScreamRepository.getOSVersion())
             })
             put("route", JSONArray().apply { put(cfg.localAlias) })
-            put("encryptedData", encryptPayload(payloadData))
+            put("encryptedData", encryptPayload(payloadData, message.recipient?.bitchatPublicKey, cfg))
         }
     }
 
@@ -172,6 +172,7 @@ class ScreamProtocolAdapter : ProtocolAdapter {
      * Returns null if the envelope is malformed.
      */
     fun decodeFromScreamEnvelope(json: JSONObject): UnifiedMessage? {
+        val cfg = this.config
         return try {
             val type = json.optString("type")
             val messageId = json.optString("id")
@@ -179,10 +180,11 @@ class ScreamProtocolAdapter : ProtocolAdapter {
             val senderUser = User(
                 id = senderJson.optString("id"),
                 alias = senderJson.optString("alias"),
-                avatar = senderJson.optString("avatar", "😎")
+                avatar = senderJson.optString("avatar", "😎"),
+                publicKey = senderJson.optString("publicKey").takeIf { it.isNotBlank() }
             )
 
-            val data = decryptPayload(json.optString("encryptedData"))
+            val data = decryptPayload(json.optString("encryptedData"), senderUser.publicKey?.let { hex -> try { hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray() } catch (e: Exception) { null } }, cfg)
                 ?: json.optJSONObject("data")
                 ?: JSONObject()
 
@@ -286,26 +288,52 @@ class ScreamProtocolAdapter : ProtocolAdapter {
 
     // ── Encryption (same as existing P2pMeshEngine) ──────────────────────────
 
-    private fun encryptPayload(payload: JSONObject): JSONObject {
+    private fun encryptPayload(payload: JSONObject, recipientPubKey: ByteArray?, cfg: ProtocolConfig?): JSONObject {
         val iv = ByteArray(AES_GCM_IV_BYTES).also { SecureRandom().nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, meshKey(), GCMParameterSpec(AES_GCM_TAG_BITS, iv))
+        
+        val key = if (recipientPubKey != null && cfg?.bitchatPrivateKey != null) {
+            val sharedSecret = com.scream.app.identity.SecurityUtils.deriveEcdhSharedSecret(cfg.bitchatPrivateKey, recipientPubKey)
+            if (sharedSecret != null) {
+                javax.crypto.spec.SecretKeySpec(sharedSecret, "AES")
+            } else {
+                meshKey()
+            }
+        } else {
+            meshKey()
+        }
+
+        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(AES_GCM_TAG_BITS, iv))
         val cipherText = cipher.doFinal(payload.toString().toByteArray(Charsets.UTF_8))
         return JSONObject().apply {
             put("alg", "AES-256-GCM")
             put("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
             put("cipherText", Base64.encodeToString(cipherText, Base64.NO_WRAP))
+            if (recipientPubKey != null) put("isDirect", true)
         }
     }
 
-    private fun decryptPayload(encryptedData: String): JSONObject? {
+    private fun decryptPayload(encryptedData: String, senderPubKey: ByteArray?, cfg: ProtocolConfig?): JSONObject? {
         if (encryptedData.isBlank()) return null
         return runCatching {
             val obj = JSONObject(encryptedData)
             val iv = Base64.decode(obj.optString("iv"), Base64.NO_WRAP)
             val cipherText = Base64.decode(obj.optString("cipherText"), Base64.NO_WRAP)
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, meshKey(), GCMParameterSpec(AES_GCM_TAG_BITS, iv))
+            
+            val isDirect = obj.optBoolean("isDirect", false)
+            val key = if (isDirect && senderPubKey != null && cfg?.bitchatPrivateKey != null) {
+                val sharedSecret = com.scream.app.identity.SecurityUtils.deriveEcdhSharedSecret(cfg.bitchatPrivateKey, senderPubKey)
+                if (sharedSecret != null) {
+                    javax.crypto.spec.SecretKeySpec(sharedSecret, "AES")
+                } else {
+                    meshKey()
+                }
+            } else {
+                meshKey()
+            }
+            
+            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(AES_GCM_TAG_BITS, iv))
             JSONObject(String(cipher.doFinal(cipherText), Charsets.UTF_8))
         }.getOrNull()
     }
@@ -316,3 +344,5 @@ class ScreamProtocolAdapter : ProtocolAdapter {
         return SecretKeySpec(keyBytes, "AES")
     }
 }
+
+
