@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `web/` folder is a standalone browser prototype and local LAN bridge. It is not part of the Android app build.
+The `web/` folder is a standalone browser prototype and local LAN bridge. It is not part of the Android app build. Full documentation is available in [`docs/WEB_COMPANION.md`](file:///d:/scream/docs/WEB_COMPANION.md).
 
 Run from repository root:
 
@@ -18,11 +18,10 @@ http://localhost:8000
 
 ## Files
 
-- `web/index.html`: static markup for onboarding, sidebar, feed, rooms, profile, chat, and user modal.
-- `web/style.css`: dark responsive UI styling.
-- `web/app.js`: browser state, UI rendering, fetch calls, SSE handling.
-- `web/server.py`: HTTP static server, API endpoints, SSE stream, UDP/TCP mesh bridge.
-- `web/logo.png`: generated logo.
+- `web/index.html`: static markup for onboarding, header navigation, feed, rooms, private chats, profile, Security Identity Card, chat overlay, room modal, diagnostics modal, and QR identity code modal.
+- `web/style.css`: modern dark responsive UI styling with CSS custom properties, glassmorphism cards, HSL color tokens, animations, and custom scrollbars.
+- `web/app.js`: browser state, UI rendering, character counter, voice note recording, photo upload, identity copy button, QR modal, fetch calls, SSE handling.
+- `web/server.py`: HTTP static server, API endpoints, SSE stream, UDP/TCP mesh bridge, and AES-256-GCM envelope encryption/decryption.
 
 ## Browser App Flow
 
@@ -30,8 +29,8 @@ http://localhost:8000
 2. `app.js` generates a local `#XXXX` ID.
 3. Browser posts `/api/register`.
 4. Browser starts `EventSource('/api/events')`.
-5. Browser receives `INIT`, `PEERS_UPDATE`, `NEW_POST`, `CHAT_MESSAGE`, `UPDATE_POST`.
-6. Feed, rooms, profile, and chat are updated in DOM.
+5. Browser receives `INIT`, `PEERS_UPDATE`, `NEW_POST`, `NEW_ROOM`, `CHAT_MESSAGE`, `UPDATE_POST`.
+6. Feed, rooms, profile identity card, and chat are updated in DOM.
 
 ## Server API
 
@@ -44,11 +43,12 @@ POST:
 - `/api/register`
 - `/api/post`
 - `/api/chat`
+- `/api/room/create`
 - `/api/like`
 - `/api/dislike`
 - `/api/reshare`
 
-## Server Mesh
+## Server Mesh & Security
 
 Ports:
 
@@ -66,32 +66,10 @@ Ports:
 
 - Binds TCP 8889.
 - Reads JSON messages from Android/web peers.
-- Calls `handle_remote_event`.
+- Supports both Android `encryptedData` AES-256-GCM payloads and plain JSON fallbacks via `handle_remote_event`.
 
 `send_to_android_peers`:
 
-- Sends plain JSON to discovered peer IPs on TCP 8889.
+- Wraps payloads in structured mesh envelopes with `encryptedData` cipherText using AES-256-GCM and transmits over TCP 8889.
 
-## Protocol Caveat
-
-The web bridge uses old plain payloads:
-
-```json
-{
-  "type": "CHAT_MESSAGE",
-  "sender": {},
-  "data": {}
-}
-```
-
-Android now sends encrypted envelopes with `encryptedData`. Android still accepts plain `data` fallback on incoming, but the web bridge does not decrypt Android outbound `encryptedData`.
-
-If cross-platform compatibility matters, update `web/server.py` to understand Android's envelope or update Android to emit a compatibility payload intentionally.
-
-## UI Caveats
-
-- Web posts/rooms are in memory only.
-- Web room creation does not broadcast a `NEW_ROOM` network event.
-- Web media/voice actions show alerts; no actual file/audio transfer.
-- Web likes/dislikes/reshares update server state but `UPDATE_POST` handling in browser currently just rerenders existing local data.
 
