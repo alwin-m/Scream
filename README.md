@@ -8,7 +8,6 @@ In SCREAM, every message you send is a **scream** — a local voice in the nearb
 
 ## Aim
 
-
 - Keep communication available when internet infrastructure fails.
 - Provide public and private communication modes without requiring a central server.
 - Forward messages through nearby devices with bounded hop counts and duplicate suppression.
