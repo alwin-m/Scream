@@ -1,5 +1,6 @@
 # SCREAM Safety Protocols
 
+
 SCREAM is designed for resilient local communication during connectivity loss,
 including outages, disasters, and remote field conditions. It is not a
 replacement for emergency services or a guarantee that a message will arrive.
