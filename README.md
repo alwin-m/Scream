@@ -1,6 +1,5 @@
 # SCREAM 🐙
 
-
 SCREAM is an offline-first, peer-to-peer communication platform for internet outages, wildfire response, remote field work, transport interruptions, and other conditions where ordinary infrastructure is unavailable or unreliable. Nearby Android devices discover one another and carry public posts, rooms, private conversations, voice, and media across a local mesh.
 
 SCREAM is civilian resilience software, not a substitute for emergency services, a military communications system, or a guarantee of delivery.
