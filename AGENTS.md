@@ -1,5 +1,6 @@
 # SCREAM Agent Instructions
 
+
 This repository has a documentation pack at `docs/ai-context`. Use it before scanning source.
 
 Default workflow for future AI agents:
